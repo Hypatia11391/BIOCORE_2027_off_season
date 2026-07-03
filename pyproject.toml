@@ -27,5 +27,9 @@ requires = [
     "robotpy-rev"
 ]
 
+[tool.ruff]
+
+line-length = 1000
+
 [tool.ruff.lint]
 ignore = ["E501"]
