@@ -1,28 +1,29 @@
 import wpilib
 import wpilib.drive as drive
+import rev
 
 
 class Robot(wpilib.TimedRobot):
     def robotInit(self):
         print("INFO: Robot initiation sequence")
 
-        self.left_front_drive: wpilib.PWMSparkMax = wpilib.PWMSparkMax(0)
-        self.right_front_drive: wpilib.PWMSparkMax = wpilib.PWMSparkMax(1)
-        self.left_rear_drive: wpilib.PWMSparkMax = wpilib.PWMSparkMax(2)
-        self.right_rear_drive: wpilib.PWMSparkMax = wpilib.PWMSparkMax(3)
+        self.left_front_drive = rev.SparkMax(9, rev.SparkLowLevel.MotorType.kBrushless)
+        self.right_front_drive = rev.SparkMax(1, rev.SparkLowLevel.MotorType.kBrushless)
+        self.left_rear_drive = rev.SparkMax(10, rev.SparkLowLevel.MotorType.kBrushless)
+        self.right_rear_drive = rev.SparkMax(2, rev.SparkLowLevel.MotorType.kBrushless)
 
-        self.robot_drive: drive.MecanumDrive = drive.MecanumDrive(
+        self.robot_drive = drive.MecanumDrive(
             self.left_front_drive,
             self.left_rear_drive,
             self.right_front_drive,
             self.right_rear_drive,
         )
 
-        self.controller: wpilib.Joystick = wpilib.Joystick(0)
+        self.controller = wpilib.Joystick(0)
 
-        self.timer: wpilib.Timer = wpilib.Timer()
+        self.timer = wpilib.Timer()
 
-        self.i: int = 0
+        self.i = 0
 
     def autonomousInit(self):
         pass
@@ -34,18 +35,28 @@ class Robot(wpilib.TimedRobot):
         pass
 
     def teleopPeriodic(self):
-        forwardSpeed: float = -self.controller.getRawAxis(1)
-        strafeSpeed: float = self.controller.getRawAxis(0)
-        turnSpeed: float = self.controller.getRawAxis(2)
+        forward_speed = -self.controller.getRawAxis(1)
+        strafe_speed = self.controller.getRawAxis(0)
+        turn_speed = -self.controller.getRawAxis(2)
 
         if not self.i:
-            print(f"{forwardSpeed=}\n{strafeSpeed=}\n{turnSpeed}")
+            print(f"{forward_speed=}\n{strafe_speed=}\n{turn_speed=}")
             self.i = 10
 
         else:
             self.i -= 1
 
-        self.robot_drive.driveCartesian(forwardSpeed, strafeSpeed, turnSpeed)
+        forward_speed = 0 if abs(forward_speed) < 0.05 else forward_speed
+        strafe_speed = 0 if abs(strafe_speed) < 0.05 else strafe_speed
+        turn_speed = 0 if abs(turn_speed) < 0.05 else turn_speed
+
+        speed_scaler: float = 0.25
+
+        self.robot_drive.driveCartesian(
+            forward_speed * speed_scaler,
+            strafe_speed * speed_scaler,
+            turn_speed * speed_scaler,
+        )
 
     def testInit(self):
         pass
@@ -57,8 +68,7 @@ class Robot(wpilib.TimedRobot):
         pass
 
     def robotPeriodic(self):
-        # print("INFO: Robot periodic sequence")
         pass
 
     def simulationPeriodic(self):
-        print("INFO: Robot simulation sequence")
+        pass
