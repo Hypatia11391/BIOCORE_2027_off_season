@@ -1,6 +1,4 @@
 import wpilib
-import wpilib.drive as drive
-import rev
 
 from src.drive.drive_train_mecanum import DriveTrainMecanum
 from src.constants import speed_scaler
