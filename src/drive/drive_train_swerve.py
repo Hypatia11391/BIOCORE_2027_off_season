@@ -1,0 +1,65 @@
+from singleton_metaclass import SingletonMeta
+import drive_train_constants as constants
+from swerve_module import SwerveModule
+
+from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
+
+
+class DriveTrainSwerve(metaclass=SingletonMeta):
+    def __init__(self):
+        self.swerve_module_front_left = SwerveModule(
+            constants.DRIVE_MOTOR_CHANNEL_FRONT_LEFT,
+            constants.TURNING_MOTOR_CHANNEL_FRONT_LEFT,
+            constants.DRIVE_ENCODER_CHANNEL_A_FRONT_LEFT,
+            constants.DRIVE_ENCODER_CHANNEL_B_FRONT_LEFT,
+            constants.TURNING_ENCODER_CHANNEL_A_FRONT_LEFT,
+            constants.TURNING_ENCODER_CHANNEL_B_FRONT_LEFT,
+        )
+
+        self.swerve_module_front_right = SwerveModule(
+            constants.DRIVE_MOTOR_CHANNEL_FRONT_RIGHT,
+            constants.TURNING_MOTOR_CHANNEL_FRONT_RIGHT,
+            constants.DRIVE_ENCODER_CHANNEL_A_FRONT_RIGHT,
+            constants.DRIVE_ENCODER_CHANNEL_B_FRONT_RIGHT,
+            constants.TURNING_ENCODER_CHANNEL_A_FRONT_RIGHT,
+            constants.TURNING_ENCODER_CHANNEL_B_FRONT_RIGHT,
+        )
+
+        self.swerve_module_rear_left = SwerveModule(
+            constants.DRIVE_MOTOR_CHANNEL_REAR_LEFT,
+            constants.TURNING_MOTOR_CHANNEL_REAR_LEFT,
+            constants.DRIVE_ENCODER_CHANNEL_A_REAR_LEFT,
+            constants.DRIVE_ENCODER_CHANNEL_B_REAR_LEFT,
+            constants.TURNING_ENCODER_CHANNEL_A_REAR_LEFT,
+            constants.TURNING_ENCODER_CHANNEL_B_REAR_LEFT,
+        )
+
+        self.swerve_module_rear_right = SwerveModule(
+            constants.DRIVE_MOTOR_CHANNEL_REAR_RIGHT,
+            constants.TURNING_MOTOR_CHANNEL_REAR_RIGHT,
+            constants.DRIVE_ENCODER_CHANNEL_A_REAR_RIGHT,
+            constants.DRIVE_ENCODER_CHANNEL_B_REAR_RIGHT,
+            constants.TURNING_ENCODER_CHANNEL_A_REAR_RIGHT,
+            constants.TURNING_ENCODER_CHANNEL_B_REAR_RIGHT,
+        )
+
+        self.kinematics = SwerveDrive4Kinematics(
+            constants.FRONT_LEFT_LOCATION,
+            constants.FRONT_RIGHT_LOCATION,
+            constants.REAR_LEFT_LOCATION,
+            constants.REAR_RIGHT_LOCATION,
+        )
+
+    def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float, period_seconds: float) -> None:
+        chassisSpeeds = ChassisSpeeds(forward_speed, strafe_speed, turn_speed)
+
+        discretizedSpeeds = ChassisSpeeds.discretize(chassisSpeeds, period_seconds)
+
+        moduleStates = self.kinematics.toSwerveModuleStates(discretizedSpeeds)
+
+        SwerveDrive4Kinematics.desaturateWheelSpeeds(moduleStates, constants.MAX_VELOCITY)
+
+        self.swerve_module_front_left.setDesiredState(moduleStates[0])
+        self.swerve_module_front_right.setDesiredState(moduleStates[1])
+        self.swerve_module_rear_left.setDesiredState(moduleStates[2])
+        self.swerve_module_rear_right.setDesiredState(moduleStates[3])

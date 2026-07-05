@@ -1,7 +1,7 @@
 import wpilib.drive as drive
 import rev
 
-from drive.drive_train_mecanum_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID
+from drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID
 from singleton_metaclass import SingletonMeta
 
 
