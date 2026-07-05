@@ -50,12 +50,12 @@ class DriveTrainSwerve(metaclass=SingletonMeta):
             constants.REAR_RIGHT_LOCATION,
         )
 
-    def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float, period_seconds: float) -> None:
-        chassisSpeeds = ChassisSpeeds(forward_speed, strafe_speed, turn_speed)
+    def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
+        chassis_speeds = ChassisSpeeds(forward_speed, strafe_speed, turn_speed)
 
-        discretizedSpeeds = ChassisSpeeds.discretize(chassisSpeeds, period_seconds)
+        # discretized_speeds = ChassisSpeeds.discretize(chassis_speeds, period_seconds)
 
-        moduleStates = self.kinematics.toSwerveModuleStates(discretizedSpeeds)
+        moduleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
 
         SwerveDrive4Kinematics.desaturateWheelSpeeds(moduleStates, constants.MAX_VELOCITY)
 
