@@ -24,7 +24,8 @@ components = [
 # is equivalent to a line in requirements.txt)
 requires = [
     "robotpy",
-    "robotpy-rev"
+    "robotpy-rev",
+    "robotpy-commands-v2"
 ]
 
 [tool.ruff]
