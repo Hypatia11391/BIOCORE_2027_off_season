@@ -1,6 +1,5 @@
 import wpilib.drive as drive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.geometry import Pose3d, Pose2d, Rectangle2d
 from wpimath.kinematics import MecanumDriveWheelPositions
 import commands2
 import rev
