@@ -25,6 +25,7 @@ class DriveTrainMecanum(commands2.Subsystem, metaclass=SingletonMeta):
 
         conversion_ratio = WHEEL_CIRCUMFERENCE / WHEEL_GEAR_RATIO
         config.encoder.positionConversionFactor(conversion_ratio)
+        config.encoder.velocityConversionFactor(conversion_ratio)
 
         self.left_front_drive.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
         self.right_front_drive.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
