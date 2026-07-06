@@ -5,13 +5,12 @@ import commands2
 import rev
 
 from src.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
-from src.singleton_metaclass import SingletonMeta
 from src.navx.navx import Navx
 
 from typing import override
 
 
-class DriveTrainMecanum(commands2.Subsystem, metaclass=SingletonMeta):
+class DriveTrainMecanum(commands2.Subsystem):
     def __init__(self, pose_estimator: MecanumDrivePoseEstimator3d, navx: Navx):
         super().__init__()
 

@@ -1,11 +1,10 @@
-from src.singleton_metaclass import SingletonMeta
 import src.drive.drive_train_constants as constants
 from src.drive.swerve_module import SwerveModule
 
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
 
 
-class DriveTrainSwerve(metaclass=SingletonMeta):
+class DriveTrainSwerve:
     def __init__(self):
         self.swerve_module_front_left = SwerveModule(
             constants.DRIVE_MOTOR_CHANNEL_FRONT_LEFT,
