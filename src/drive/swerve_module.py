@@ -20,12 +20,12 @@ class SwerveModule:
         turning_encoder_channel_a: int,
         turning_encoder_channel_b: int,
     ):
-        self.drive_motor_channel = drive_motor_channel
-        self.turning_motor_channel = turning_motor_channel
-        self.drive_encoder_channel_a = drive_encoder_channel_a
-        self.drive_encoder_channel_b = drive_encoder_channel_b
-        self.turning_encoder_channel_a = turning_encoder_channel_a
-        self.turning_encoder_channel_b = turning_encoder_channel_b
+        # self.drive_motor_channel = drive_motor_channel
+        # self.turning_motor_channel = turning_motor_channel
+        # self.drive_encoder_channel_a = drive_encoder_channel_a
+        # self.drive_encoder_channel_b = drive_encoder_channel_b
+        # self.turning_encoder_channel_a = turning_encoder_channel_a
+        # self.turning_encoder_channel_b = turning_encoder_channel_b
 
         self.drive_PID_controller = PIDController(1, 0, 0)
 
@@ -53,25 +53,20 @@ class SwerveModule:
     def setDesiredState(self, desired_state: SwerveModuleState) -> None:
         encoder_rotation = Rotation2d(self.turning_encoder.getDistance())
 
-        # Optimize the reference state to avoid spinning further than 90 degrees
         desired_state.optimize(encoder_rotation)
 
-        # Scale speed by cosine of angle error. This scales down movement perpendicular
-        # to the desired
-        # direction of travel that can occur when modules change directions. This
-        # results in smoother
-        # driving.
         desired_state.cosineScale(encoder_rotation)
 
-        # Calculate the drive output from the drive PID controller.
-
+        # Volatge
         drive_output = self.drive_PID_controller.calculate(self.drive_encoder.getRate(), desired_state.speed)
 
+        # Volatge
         drive_feed_forward = self.drive_feed_forward.calculate(desired_state.speed)
 
-        # Calculate the turning motor output from the turning PID controller.
+        # Volatge
         turn_output = self.turning_PID_controller.calculate(self.turning_encoder.getDistance(), desired_state.angle.radians())
 
+        # Volatge
         turn_feed_forward = self.turn_feed_forward.calculate(self.turning_PID_controller.getSetpoint().velocity)
 
         self.drive_motor.setVoltage(drive_output + drive_feed_forward)
