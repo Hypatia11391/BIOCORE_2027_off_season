@@ -1,6 +1,6 @@
-from singleton_metaclass import SingletonMeta
-import drive_train_constants as constants
-from swerve_module import SwerveModule
+from src.singleton_metaclass import SingletonMeta
+import src.drive.drive_train_constants as constants
+from src.drive.swerve_module import SwerveModule
 
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
 
