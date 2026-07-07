@@ -2,9 +2,10 @@ import src.drive.drive_train_constants as constants
 from src.drive.swerve_module import SwerveModule
 
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
+from commands2 import Subsystem
 
 
-class DriveTrainSwerve:
+class DriveTrainSwerve(Subsystem):
     def __init__(self):
         self.swerve_module_front_left = SwerveModule(
             constants.DRIVE_MOTOR_CHANNEL_FRONT_LEFT,

@@ -1,7 +1,7 @@
 import wpilib.drive as drive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.kinematics import MecanumDriveWheelPositions
-import commands2
+from commands2 import Subsystem
 import rev
 
 from src.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
@@ -10,7 +10,7 @@ from src.navx.navx import Navx
 from typing import override
 
 
-class DriveTrainMecanum(commands2.Subsystem):
+class DriveTrainMecanum(Subsystem):
     def __init__(self, pose_estimator: MecanumDrivePoseEstimator3d, navx: Navx):
         super().__init__()
 
