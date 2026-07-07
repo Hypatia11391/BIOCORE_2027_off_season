@@ -57,16 +57,16 @@ class SwerveModule:
 
         desired_state.cosineScale(encoder_rotation)
 
-        # Volatge
+        # Voltage
         drive_output = self.drive_PID_controller.calculate(self.drive_encoder.getRate(), desired_state.speed)
 
-        # Volatge
+        # Voltage
         drive_feed_forward = self.drive_feed_forward.calculate(desired_state.speed)
 
-        # Volatge
+        # Voltage
         turn_output = self.turning_PID_controller.calculate(self.turning_encoder.getDistance(), desired_state.angle.radians())
 
-        # Volatge
+        # Voltage
         turn_feed_forward = self.turn_feed_forward.calculate(self.turning_PID_controller.getSetpoint().velocity)
 
         self.drive_motor.setVoltage(drive_output + drive_feed_forward)

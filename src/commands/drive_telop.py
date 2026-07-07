@@ -21,7 +21,7 @@ class DriveTelop(Command):
         pass
 
     @override
-    def exucute(self) -> None:
+    def execute(self) -> None:
         forward_speed = -self.controller.getRawAxis(1)
         strafe_speed = self.controller.getRawAxis(0)
         turn_speed = -self.controller.getRawAxis(2)
