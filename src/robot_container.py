@@ -2,10 +2,10 @@ from wpilib import Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
-from src.drive.drive_train_mecanum import DriveTrainMecanum
+from subsytems.drive.drive_train_mecanum import DriveTrainMecanum
 from src.navx.navx import Navx
 from src.commands.drive_telop import DriveTelop
-import src.drive.drive_train_constants as drive_constants
+import subsytems.drive.drive_train_constants as drive_constants
 import src.constants as constants
 
 

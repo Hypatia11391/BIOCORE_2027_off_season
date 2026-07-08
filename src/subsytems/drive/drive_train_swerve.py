@@ -1,5 +1,5 @@
-import src.drive.drive_train_constants as constants
-from src.drive.swerve_module import SwerveModule
+import subsytems.drive.drive_train_constants as constants
+from subsytems.drive.swerve_module import SwerveModule
 
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
 from commands2 import Subsystem

@@ -1,4 +1,4 @@
-import src.drive.drive_train_constants as constants
+import subsytems.drive.drive_train_constants as constants
 
 from wpimath.controller import PIDController, ProfiledPIDController, SimpleMotorFeedforwardMeters, SimpleMotorFeedforwardRadians
 from wpimath.trajectory import TrapezoidProfile

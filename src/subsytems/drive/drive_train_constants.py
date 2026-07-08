@@ -16,7 +16,7 @@ REAR_RIGHT_ID: Final[int] = 2
 WHEEL_DIAMETER: Final[float] = 0.1588
 WHEEL_RADIUS: Final[float] = WHEEL_DIAMETER / 2
 WHEEL_CIRCUMFERENCE: Final[float] = pi * WHEEL_DIAMETER
-WHEEL_GEAR_RATIO: Final[int] = 1  # TODO: Figure out correct gear ratio
+WHEEL_GEAR_RATIO: Final[int] = 1  # TODO: Figure out correct gear ratio, might just be 1
 
 # rads/sec
 MAX_ANGULAR_SPEED: Final[float] = pi

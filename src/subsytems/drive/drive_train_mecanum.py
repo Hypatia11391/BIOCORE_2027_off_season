@@ -4,7 +4,7 @@ from wpimath.kinematics import MecanumDriveWheelPositions
 from commands2 import Subsystem
 import rev
 
-from src.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
+from subsytems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 from src.navx.navx import Navx
 
 from typing import override
