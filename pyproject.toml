@@ -25,7 +25,8 @@ components = [
 requires = [
     "robotpy",
     "robotpy-rev",
-    "robotpy-commands-v2"
+    "robotpy-commands-v2",
+    "robotpy-navx"
 ]
 
 [tool.ruff]
