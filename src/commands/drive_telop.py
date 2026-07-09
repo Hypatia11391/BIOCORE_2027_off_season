@@ -8,7 +8,7 @@ from src.constants import SPEED_SCALAR
 
 
 class DriveTelop(Command):
-    def __init__(self, drive: DriveTrainMecanum, controller: Joystick):
+    def __init__(self, drive: DriveTrainMecanum, controller: Joystick) -> None:
         super().__init__()
 
         self.drive = drive

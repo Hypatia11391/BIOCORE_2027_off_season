@@ -6,7 +6,7 @@ from math import radians
 
 
 class Navx(Subsystem):
-    def __init__(self):
+    def __init__(self) -> None:
         self.navx = AHRS(AHRS.NavXComType.kMXP_SPI)
 
     def get_roll_deg(self) -> float:

@@ -1,24 +1,33 @@
 from commands2 import Command
-from wpilib import Joystick
+from wpilib import Joystick, Timer
 
 from typing import override
 
 from src.subsytems.mechanisms.intake import Intake
+from src.subsytems.mechanisms.feed import Feed
+from src.subsytems.mechanisms.kicker import Kicker
+from src.subsytems.mechanisms.shooter import Shooter
 import commands.operation_constants as operation_consts
 from src.buttons import Buttons
+from src.joysticks_axes import JoystickAxes
 
 
 class OperateTelop(Command):
-    def __init__(self, intake: Intake, controller: Joystick):
+    def __init__(self, intake: Intake, feed: Feed, kicker: Kicker, shooter: Shooter, controller: Joystick) -> None:
         super().__init__()
 
         self.intake = intake
+        self.feed = feed
+        self.kicker = kicker
+        self.shooter = shooter
         self.controller = controller
 
-        self.addRequirements(intake)
+        self.addRequirements(intake, feed, kicker, shooter)
 
         self.intake_lift_state = operation_consts.IntakeLiftState.OFF.value
         self.intake_feed_state = operation_consts.IntakeFeedState.OFF.value
+
+        self.time_at_target_speed = -1.0
 
     @override
     def initialize(self) -> None:
@@ -48,9 +57,33 @@ class OperateTelop(Command):
             case operation_consts.IntakeFeedState.OUT.value:
                 self.intake.set_feed_speed(-operation_consts.INTAKE_FEED_PWR)
 
+        rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
+
+        if abs(rt_shoot) > 0.08:
+            left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
+            right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
+
+            self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
+            self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
+
+            if self.shooter.is_at_target_rpm():
+                if self.time_at_target_speed < 0.0:
+                    self.time_at_target_speed = Timer.getFPGATimestamp()
+
+            else:
+                self.feed.stop()
+
+        else:
+            self.feed.stop()
+            self.kicker.stop()
+            self.shooter.stop()
+
     @override
     def end(self, interrupted: bool) -> None:
         self.intake.stop()
+        self.feed.stop()
+        self.kicker.stop()
+        self.shooter.stop()
 
     @override
     def isFinished(self) -> bool:

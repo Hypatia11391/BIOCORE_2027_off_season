@@ -6,7 +6,7 @@ from commands2 import Subsystem
 
 
 class DriveTrainSwerve(Subsystem):
-    def __init__(self):
+    def __init__(self) -> None:
         self.swerve_module_front_left = SwerveModule(
             constants.DRIVE_MOTOR_CHANNEL_FRONT_LEFT,
             constants.TURNING_MOTOR_CHANNEL_FRONT_LEFT,

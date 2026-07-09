@@ -11,7 +11,7 @@ from typing import override
 
 
 class DriveTrainMecanum(Subsystem):
-    def __init__(self, pose_estimator: MecanumDrivePoseEstimator3d, navx: Navx):
+    def __init__(self, pose_estimator: MecanumDrivePoseEstimator3d, navx: Navx) -> None:
         super().__init__()
 
         self.left_front_drive = rev.SparkMax(FRONT_LEFT_ID, rev.SparkLowLevel.MotorType.kBrushless)

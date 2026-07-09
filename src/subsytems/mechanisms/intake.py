@@ -5,7 +5,7 @@ import src.subsytems.mechanisms.intake_constants as intake_consts
 
 
 class Intake(Subsystem):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.intake_lift = SparkMax(intake_consts.INTAKE_LIFT_ID, SparkLowLevel.MotorType.kBrushless)
@@ -18,7 +18,7 @@ class Intake(Subsystem):
 
         lift_config = SparkMaxConfig()
         lift_config.inverted(intake_consts.INTAKE_LIFT_INVERTED)
-        lift_config.IdleMode(intake_consts.INTAKE_LIFT_IDLE_MODE)
+        lift_config.setIdleMode(intake_consts.INTAKE_LIFT_IDLE_MODE)
         lift_config.smartCurrentLimit(intake_consts.INTAKE_LIFT_SMART_LIMIT)
         lift_config.voltageCompensation(intake_consts.INTAKE_LIFT_VOLTAGE_COMPENSATION)
         lift_config.encoder.velocityConversionFactor(intake_consts.INTAKE_LIFT_ENCODER_VELOCITY_CONVERSION_FACTOR)
@@ -34,7 +34,7 @@ class Intake(Subsystem):
 
         feed_config = SparkMaxConfig()
         feed_config.inverted(intake_consts.INTAKE_FEED_INVERTED)
-        feed_config.IdleMode(intake_consts.INTAKE_FEED_IDLE_MODE)
+        feed_config.setIdleMode(intake_consts.INTAKE_FEED_IDLE_MODE)
         feed_config.smartCurrentLimit(intake_consts.INTAKE_FEED_SMART_LIMIT)
         feed_config.voltageCompensation(intake_consts.INTAKE_FEED_VOLTAGE_COMPENSATION)
 
