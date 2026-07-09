@@ -1,7 +1,7 @@
 from commands2 import Subsystem
 from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode, SparkBase
 
-import src.subsytems.mechanisms.shooter_constants as shooter_consts
+import src.subsystems.mechanisms.shooter_constants as shooter_consts
 
 
 class Shooter(Subsystem):

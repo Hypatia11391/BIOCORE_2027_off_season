@@ -3,7 +3,7 @@ from wpilib import Joystick
 
 from typing import override
 
-from src.subsytems.drive.drive_train_mecanum import DriveTrainMecanum
+from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
 from src.constants import SPEED_SCALAR
 
 

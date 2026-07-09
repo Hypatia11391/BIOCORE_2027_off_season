@@ -1,7 +1,7 @@
 from commands2 import Subsystem
 from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode
 
-import src.subsytems.mechanisms.kicker_constants as kicker_consts
+import src.subsystems.mechanisms.kicker_constants as kicker_consts
 
 
 class Kicker(Subsystem):

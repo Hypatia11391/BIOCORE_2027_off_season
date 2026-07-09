@@ -3,11 +3,11 @@ from wpilib import Joystick, Timer
 
 from typing import override
 
-from src.subsytems.mechanisms.intake import Intake
-from src.subsytems.mechanisms.feed import Feed
-from src.subsytems.mechanisms.kicker import Kicker
-from src.subsytems.mechanisms.shooter import Shooter
-import commands.operation_constants as operation_consts
+from src.subsystems.mechanisms.intake import Intake
+from src.subsystems.mechanisms.feed import Feed
+from src.subsystems.mechanisms.kicker import Kicker
+from src.subsystems.mechanisms.shooter import Shooter
+import src.commands.operation_constants as operation_consts
 from src.buttons import Buttons
 from src.joysticks_axes import JoystickAxes
 

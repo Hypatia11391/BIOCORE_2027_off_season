@@ -1,7 +1,7 @@
 from commands2 import Subsystem
 from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode
 
-import src.subsytems.mechanisms.feed_constants as feed_consts
+import src.subsystems.mechanisms.feed_constants as feed_consts
 
 
 class Feed(Subsystem):

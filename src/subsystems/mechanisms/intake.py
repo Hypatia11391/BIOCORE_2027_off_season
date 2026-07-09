@@ -1,7 +1,7 @@
 from commands2 import Subsystem
 from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode
 
-import src.subsytems.mechanisms.intake_constants as intake_consts
+import src.subsystems.mechanisms.intake_constants as intake_consts
 
 
 class Intake(Subsystem):

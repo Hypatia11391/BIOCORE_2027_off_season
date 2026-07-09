@@ -2,15 +2,16 @@ from wpilib import Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
-from src.subsytems.drive.drive_train_mecanum import DriveTrainMecanum
-from src.subsytems.mechanisms.intake import Intake
-from src.subsytems.mechanisms.feed import Feed
-from src.subsytems.mechanisms.kicker import Kicker
-from src.subsytems.mechanisms.shooter import Shooter
+import src.subsystems
+from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
+from src.subsystems.mechanisms.intake import Intake
+from src.subsystems.mechanisms.feed import Feed
+from src.subsystems.mechanisms.kicker import Kicker
+from src.subsystems.mechanisms.shooter import Shooter
 from src.navx.navx import Navx
 from src.commands.drive_telop import DriveTelop
 from src.commands.operate_telop import OperateTelop
-import subsytems.drive.drive_train_constants as drive_constants
+import src.subsystems.drive.drive_train_constants as drive_constants
 import src.constants as constants
 
 
