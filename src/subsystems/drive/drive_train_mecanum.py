@@ -56,9 +56,11 @@ class DriveTrainMecanum(Subsystem):
         )
 
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
-        return MecanumDriveWheelPositions(
-            self.left_front_encoder.getPosition(),
-            self.right_front_encoder.getPosition(),
-            self.left_rear_encoder.getPosition(),
-            self.right_rear_encoder.getPosition(),
-        )
+        positions = MecanumDriveWheelPositions()
+
+        positions.frontLeft = self.left_front_encoder.getPosition()
+        positions.frontRight = self.right_front_encoder.getPosition()
+        positions.rearLeft = self.left_rear_encoder.getPosition()
+        positions.rearRight = self.right_rear_encoder.getPosition()
+        
+        return positions

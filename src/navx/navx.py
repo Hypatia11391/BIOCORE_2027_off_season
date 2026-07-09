@@ -16,13 +16,13 @@ class Navx(Subsystem):
         return self.navx.getPitch()
 
     def get_heading(self) -> float:
-        return Rotation2d.fromDegrees(self.navx.getYaw())
+        return self.navx.getRotation2d() #Rotation2d.fromDegrees(self.navx.getYaw())
 
     def get_full_rotation(self) -> Rotation3d:
         return Rotation3d(
             radians(self.get_roll_deg()),
             radians(self.get_pitch_deg()),
-            self.get_heading().getRadians(),
+            self.get_heading().radians(),
         )
 
     def is_calibrating(self) -> bool:
