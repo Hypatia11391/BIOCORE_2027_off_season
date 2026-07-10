@@ -16,20 +16,20 @@ class Navx(Subsystem):
         return self.navx.getPitch()
 
     def get_heading(self) -> float:
-        return self.navx.getRotation2d() #Rotation2d.fromDegrees(self.navx.getYaw())
+        return self.navx.getFusedHeading()
 
     def get_full_rotation(self) -> Rotation3d:
         return Rotation3d(
             radians(self.get_roll_deg()),
             radians(self.get_pitch_deg()),
-            self.get_heading().radians(),
+            self.get_heading(),
         )
 
     def is_calibrating(self) -> bool:
         return self.navx.isCalibrating()
 
     def is_connected(self) -> bool:
-        return self.navx.isConnected(0)
+        return self.navx.isConnected()
 
     def reset(self) -> None:
         self.navx.reset()
