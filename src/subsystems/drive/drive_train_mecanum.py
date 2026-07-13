@@ -50,10 +50,11 @@ class DriveTrainMecanum(Subsystem):
 
     @override
     def periodic(self) -> None:
-        self.pose_estimator.update(
-            self.navx.get_full_rotation(),
-            self.get_wheel_positions(),
-        )
+        if self.pose_estimator is not None:
+            self.pose_estimator.update(
+                self.navx.get_full_rotation(),
+                self.get_wheel_positions(),
+            )
 
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()
