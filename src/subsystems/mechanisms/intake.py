@@ -47,6 +47,8 @@ class Intake(Subsystem):
     # In degrees
     def set_lift_position(self, target_pos: float) -> None:
         self.target_pos = max(intake_consts.INTAKE_LIFT_MIN_POS, min(target_pos, intake_consts.INTAKE_LIFT_MAX_POS))  # Clamp
+        # NOTE this is using absolute angles, whereas the java code uses relative movements
+        # I think it makes more sense to use absolute angles, but the constants will need to be adjusted
 
         self.lift_loop.setSetpoint(self.target_pos / 360, SparkLowLevel.ControlType.kPosition)
 

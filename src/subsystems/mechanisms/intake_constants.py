@@ -5,8 +5,8 @@ from typing import Final
 INTAKE_FEED_ID: Final[int] = 4
 INTAKE_LIFT_ID: Final[int] = 6
 
-INTAKE_LIFT_MIN_POS: Final[float] = -51.0
-INTAKE_LIFT_MAX_POS: Final[float] = -10.0
+INTAKE_LIFT_MIN_POS: Final[float] = -51.0 # ]
+INTAKE_LIFT_MAX_POS: Final[float] = -10.0 # ] NOTE are these backwards maybe? this is what makes it move at startup without any controller input, so it being backwards could explain why motor is stalling
 INTAKE_LIFT_START_POS: Final[float] = 0.0
 
 INTAKE_LIFT_INVERTED: Final[bool] = True
