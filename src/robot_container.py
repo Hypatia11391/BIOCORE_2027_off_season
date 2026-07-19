@@ -3,6 +3,7 @@ from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
 import src.subsystems
+from src.subsystems.pose_estimation.vision_server import VisionServer
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
 from src.subsystems.mechanisms.intake import Intake
 from src.subsystems.mechanisms.feed import Feed
@@ -32,6 +33,8 @@ class RobotContainer:
             MecanumDriveWheelPositions(),
             constants.STARTING_POSE,
         )
+
+        self.vision_server = VisionServer(self.pose_estimator)
 
         self.drive = DriveTrainMecanum(self.pose_estimator, self.navx)
         self.intake = Intake()
