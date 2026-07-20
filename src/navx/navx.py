@@ -1,4 +1,4 @@
-from wpimath.geometry import Rotation3d, Rotation2d
+from wpimath.geometry import Rotation3d
 from commands2 import Subsystem
 from navx import AHRS
 
