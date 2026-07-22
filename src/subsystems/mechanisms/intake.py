@@ -1,8 +1,6 @@
 from commands2 import Subsystem
 from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode
 
-from collections import deque
-
 import src.subsystems.mechanisms.intake_constants as intake_consts
 
 

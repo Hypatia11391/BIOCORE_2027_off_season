@@ -1,5 +1,5 @@
 from commands2 import Command
-from wpilib import Joystick, Timer
+from wpilib import Joystick
 
 from typing import override
 
@@ -9,7 +9,6 @@ from src.subsystems.mechanisms.kicker import Kicker
 from src.subsystems.mechanisms.shooter import Shooter
 import src.commands.operation_constants as operation_consts
 from src.buttons import Buttons
-from src.joysticks_axes import JoystickAxes
 
 
 class OperateTelop(Command):
