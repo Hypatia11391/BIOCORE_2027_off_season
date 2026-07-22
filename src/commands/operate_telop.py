@@ -56,34 +56,35 @@ class OperateTelop(Command):
 
             case operation_consts.IntakeFeedState.OUT.value:
                 self.intake.set_feed_speed(-operation_consts.INTAKE_FEED_PWR)
-        
-        rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
 
-        if abs(rt_shoot) > 0.08:
-            left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
-            right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
+        # rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
 
-            #self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
-            self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
+        # if abs(rt_shoot) > 0.08:
+        #     left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
+        #     right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
 
-            if self.shooter.is_at_target_rpm():
-                if self.time_at_target_speed < 0.0:
-                    self.time_at_target_speed = Timer.getFPGATimestamp()
+        #     # self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
+        #     self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
 
-            else:
-                pass#self.feed.stop()
+        #     # if self.shooter.is_at_target_rpm():
+        #     #     if self.time_at_target_speed < 0.0:
+        #     #         self.time_at_target_speed = Timer.getFPGATimestamp()
 
-        else:
-            #self.feed.stop()
-            #self.kicker.stop()
-            self.shooter.stop()
+        #     else:
+        #         pass  # self.feed.stop()
+
+        # else:
+        #     pass
+        #     # self.feed.stop()
+        #     # self.kicker.stop()
+        #     # self.shooter.stop()
 
     @override
     def end(self, interrupted: bool) -> None:
         self.intake.stop()
-        #self.feed.stop()
-        #self.kicker.stop()
-        #self.shooter.stop()
+        # self.feed.stop()
+        # self.kicker.stop()
+        # self.shooter.stop()
 
     @override
     def isFinished(self) -> bool:

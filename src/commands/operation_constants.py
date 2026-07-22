@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Final
 
-INTAKE_LIFT_POS_UP: Final[float] = 126   # ] NOTE TODO these constants are wrong probably
-INTAKE_LIFT_POS_DOWN: Final[float] = -72 # ]
+INTAKE_LIFT_POS_UP: Final[float] = -10
+INTAKE_LIFT_POS_DOWN: Final[float] = -25  # TODO: this constant could be wrong
 
 INTAKE_FEED_PWR: Final[float] = 0.3
 
