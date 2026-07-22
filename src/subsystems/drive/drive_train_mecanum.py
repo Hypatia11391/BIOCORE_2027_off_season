@@ -1,10 +1,15 @@
-import wpilib.drive as drive
+from wpilib import DriverStation
+from wpilib.drive import MecanumDrive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.kinematics import MecanumDriveWheelPositions
+from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds, ChassisSpeeds
+from wpimath.geometry import Pose2d, Pose3d
 from commands2 import Subsystem
+from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
+from pathplannerlib.config import RobotConfig
 import rev
 
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
+from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, FRONT_LEFT_LOCATION, FRONT_RIGHT_LOCATION, REAR_LEFT_LOCATION, REAR_RIGHT_LOCATION, MAX_SPEED, MAX_ANGULAR_SPEED
 from src.navx.navx import Navx
 
 from typing import override
@@ -35,7 +40,7 @@ class DriveTrainMecanum(Subsystem):
         self.left_rear_encoder = self.left_rear_drive.getEncoder()
         self.right_rear_encoder = self.right_rear_drive.getEncoder()
 
-        self.robot_drive = drive.MecanumDrive(
+        self.robot_drive = MecanumDrive(
             self.left_front_drive,
             self.left_rear_drive,
             self.right_front_drive,
@@ -45,8 +50,45 @@ class DriveTrainMecanum(Subsystem):
         self.pose_estimator = pose_estimator
         self.navx = navx
 
+        self.kinematics = MecanumDriveKinematics(
+            FRONT_LEFT_LOCATION,
+            FRONT_RIGHT_LOCATION,
+            REAR_LEFT_LOCATION,
+            REAR_RIGHT_LOCATION,
+        )
+
+        config = RobotConfig.fromGUISettings()
+
+        AutoBuilder.configure(
+            self.get_pose_2d,  # Robot pose supplier
+            self.reset_pose_2d,  # Method to reset odometry (will be called if your auto has a starting pose)
+            self.get_relative_speeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also outputs individual module feedforwards
+            PPHolonomicDriveController(PIDConstants(5.0, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0)),  # PPLTVController is the built in path following controller for differential drive trains
+            config,  # The robot configuration
+            self.should_flip_path,  # Supplier to control path flipping based on alliance color
+            self,  # Reference to this subsystem to set requirements
+        )
+
+    def should_flip_path(self) -> bool:
+        # Boolean supplier that controls when the path will be mirrored for the red alliance
+        # This will flip the path being followed to the red side of the field.
+        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
+
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
+
+    def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
+        forward_speed = speeds.vx
+        strafe_speed = speeds.vy
+        turn_speed = speeds.omega
+
+        forward_speed_percent = forward_speed / MAX_SPEED
+        strafe_speed_percent = strafe_speed / MAX_SPEED
+        turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
+
+        self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
 
     @override
     def periodic(self) -> None:
@@ -63,5 +105,28 @@ class DriveTrainMecanum(Subsystem):
         positions.frontRight = self.right_front_encoder.getPosition()
         positions.rearLeft = self.left_rear_encoder.getPosition()
         positions.rearRight = self.right_rear_encoder.getPosition()
-        
+
         return positions
+
+    def get_wheel_speeds(self) -> MecanumDriveWheelSpeeds:
+        return MecanumDriveWheelSpeeds(
+            self.left_front_encoder.getVelocity(),
+            self.right_front_encoder.getVelocity(),
+            self.left_rear_encoder.getVelocity(),
+            self.right_rear_encoder.getVelocity(),
+        )
+
+    def get_relative_speeds(self) -> ChassisSpeeds:
+        return self.kinematics.toChassisSpeeds(self.get_wheel_speeds())
+
+    def get_pose_2d(self) -> Pose2d:
+        return self.pose_estimator.getEstimatedPosition().toPose2d()
+
+    def get_pose_3d(self) -> Pose3d:
+        return self.pose_estimator.getEstimatedPosition()
+
+    def reset_pose_2d(self, pose: Pose2d) -> None:
+        self.pose_estimator.resetPose(Pose3d(pose))
+
+    def reset_pose_3d(self, pose: Pose3d) -> None:
+        self.pose_estimator.resetPose(pose)

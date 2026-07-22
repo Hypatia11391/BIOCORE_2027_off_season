@@ -1,6 +1,8 @@
 from wpilib import Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
+from commands2 import Command
+from pathplannerlib.auto import PathPlannerAuto
 
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
 from src.subsystems.mechanisms.intake import Intake
@@ -43,3 +45,6 @@ class RobotContainer:
 
         self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
+
+    def get_autonomous_command(self) -> Command:
+        return PathPlannerAuto("Testing Auto")
