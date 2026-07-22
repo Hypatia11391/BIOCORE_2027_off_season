@@ -47,4 +47,4 @@ class RobotContainer:
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
 
     def get_autonomous_command(self) -> Command:
-        return PathPlannerAuto("Testing Auto")
+        return PathPlannerAuto("Drive Forward 5m.auto")

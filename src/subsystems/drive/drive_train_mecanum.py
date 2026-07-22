@@ -60,20 +60,17 @@ class DriveTrainMecanum(Subsystem):
         config = RobotConfig.fromGUISettings()
 
         AutoBuilder.configure(
-            self.get_pose_2d,  # Robot pose supplier
-            self.reset_pose_2d,  # Method to reset odometry (will be called if your auto has a starting pose)
-            self.get_relative_speeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also outputs individual module feedforwards
-            PPHolonomicDriveController(PIDConstants(5.0, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0)),  # PPLTVController is the built in path following controller for differential drive trains
-            config,  # The robot configuration
-            self.should_flip_path,  # Supplier to control path flipping based on alliance color
-            self,  # Reference to this subsystem to set requirements
+            self.get_pose_2d,
+            self.reset_pose_2d,
+            self.get_relative_speeds,
+            lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
+            PPHolonomicDriveController(PIDConstants(5.0, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0)),
+            config,
+            self.should_flip_path,
+            self,
         )
 
     def should_flip_path(self) -> bool:
-        # Boolean supplier that controls when the path will be mirrored for the red alliance
-        # This will flip the path being followed to the red side of the field.
-        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
