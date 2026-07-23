@@ -37,9 +37,14 @@ class Shooter(Subsystem):
         return self.right_encoder.getVelocity()
 
     def is_at_target_rpm(self) -> bool:
+        print("targed rpm: ", self.target_rpm_left, self.target_rpm_right)
+
+        # print(f"{abs(self.get_left_rpm() - self.target_rpm_left) <= shooter_consts.SHOOTER_RPM_TOLERANCE=} and {abs(self.get_right_rpm() - self.target_rpm_right) <= shooter_consts.SHOOTER_RPM_TOLERANCE=}")
         return abs(self.get_left_rpm() - self.target_rpm_left) <= shooter_consts.SHOOTER_RPM_TOLERANCE and abs(self.get_right_rpm() - self.target_rpm_right) <= shooter_consts.SHOOTER_RPM_TOLERANCE
 
     def stop(self) -> None:
+        print("stoping shooter")
+
         self.target_rpm_left = 0.0
         self.target_rpm_right = 0.0
         self.motor_left.stopMotor()
@@ -66,3 +71,9 @@ class Shooter(Subsystem):
             ResetMode.kNoResetSafeParameters,
             PersistMode.kPersistParameters,
         )
+
+    def get_left_voltage(self) -> float:
+        return self.motor_left.getBusVoltage() * self.motor_left.getAppliedOutput()
+
+    def get_right_voltage(self) -> float:
+        return self.motor_right.getBusVoltage() * self.motor_right.getAppliedOutput()

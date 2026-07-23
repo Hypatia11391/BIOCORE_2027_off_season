@@ -19,5 +19,5 @@ SHOOTER_KV: Final[float] = 1 / SHOOTER_FREE_SPEED
 SHOOTER_RPM_TOLERANCE: Final[float] = 400.0
 
 SHOOTER_KP: Final[float] = 0.00006
-SHOOTER_KI: Final[float] = 0.0
+SHOOTER_KI: Final[float] = 0
 SHOOTER_KD: Final[float] = 0.1

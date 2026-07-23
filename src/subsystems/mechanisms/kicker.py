@@ -8,7 +8,7 @@ class Kicker(Subsystem):
     def __init__(self) -> None:
         super().__init__()
 
-        self.motor = SparkMax(kicker_consts.KICKER_ID, SparkLowLevel.MotorType.kBrushless)
+        self.motor = SparkMax(kicker_consts.KICKER_ID, SparkLowLevel.MotorType.kBrushed)
 
         config = SparkMaxConfig()
         config.inverted(kicker_consts.KICKER_INVERTED)

@@ -17,7 +17,7 @@ import src.constants as constants
 
 
 class RobotContainer:
-    def __init__(self) -> None:
+    def __init__(self):
         self.kinematics = MecanumDriveKinematics(
             drive_constants.FRONT_LEFT_LOCATION,
             drive_constants.FRONT_RIGHT_LOCATION,

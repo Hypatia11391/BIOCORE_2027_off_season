@@ -30,10 +30,10 @@ class DriveTrainMecanum(Subsystem):
         config.encoder.positionConversionFactor(conversion_ratio)
         config.encoder.velocityConversionFactor(conversion_ratio)
 
-        self.left_front_drive.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
-        self.right_front_drive.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
-        self.left_rear_drive.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
-        self.right_rear_drive.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
+        self.config_drive_motor(self.left_front_drive, False)
+        self.config_drive_motor(self.right_front_drive, True)
+        self.config_drive_motor(self.left_rear_drive, False)
+        self.config_drive_motor(self.right_rear_drive, True)
 
         self.left_front_encoder = self.left_front_drive.getEncoder()
         self.right_front_encoder = self.right_front_drive.getEncoder()
@@ -85,7 +85,15 @@ class DriveTrainMecanum(Subsystem):
         strafe_speed_percent = strafe_speed / MAX_SPEED
         turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
 
+        print(f"{forward_speed=}")
+        print(f"{strafe_speed=}")
+        print(f"{turn_speed=}")
+        print(f"{forward_speed_percent=}")
+        print(f"{strafe_speed_percent=}")
+        print(f"{turn_speed_percent=}")
+
         self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
+        # self.drive(0, 0, 0)
 
     @override
     def periodic(self) -> None:
@@ -95,16 +103,16 @@ class DriveTrainMecanum(Subsystem):
                 self.get_wheel_positions(),
             )
 
-        # SmartDashboard.putNumber("Gyro", self.navx.get_heading())
-        # SmartDashboard.putNumberArray(
-        #     "RobotDrive Motors",
-        #     [
-        #         self.left_front_encoder.getVelocity(),
-        #         self.right_front_encoder.getVelocity(),
-        #         self.left_rear_encoder.getVelocity(),
-        #         self.right_rear_encoder.getVelocity(),
-        #     ],
-        # )
+        SmartDashboard.putNumber("Gyro", self.navx.get_heading())
+        SmartDashboard.putNumberArray(
+            "RobotDrive Motors",
+            [
+                self.left_front_encoder.getVelocity(),
+                self.right_front_encoder.getVelocity(),
+                self.left_rear_encoder.getVelocity(),
+                self.right_rear_encoder.getVelocity(),
+            ],
+        )
 
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()
@@ -138,3 +146,14 @@ class DriveTrainMecanum(Subsystem):
 
     def reset_pose_3d(self, pose: Pose3d) -> None:
         self.pose_estimator.resetPose(pose)
+
+    def config_drive_motor(self, motor: rev.SparkMax, inverted: bool) -> None:
+        config = rev.SparkMaxConfig()
+
+        config.inverted(inverted)
+
+        conversion_ratio = WHEEL_CIRCUMFERENCE / WHEEL_GEAR_RATIO
+        config.encoder.positionConversionFactor(conversion_ratio)
+        config.encoder.velocityConversionFactor(conversion_ratio)
+
+        motor.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
