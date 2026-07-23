@@ -1,4 +1,4 @@
-from wpilib import DriverStation
+from wpilib import DriverStation, SmartDashboard
 from wpilib.drive import MecanumDrive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds, ChassisSpeeds
@@ -94,6 +94,17 @@ class DriveTrainMecanum(Subsystem):
                 self.navx.get_full_rotation(),
                 self.get_wheel_positions(),
             )
+
+        # SmartDashboard.putNumber("Gyro", self.navx.get_heading())
+        # SmartDashboard.putNumberArray(
+        #     "RobotDrive Motors",
+        #     [
+        #         self.left_front_encoder.getVelocity(),
+        #         self.right_front_encoder.getVelocity(),
+        #         self.left_rear_encoder.getVelocity(),
+        #         self.right_rear_encoder.getVelocity(),
+        #     ],
+        # )
 
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()

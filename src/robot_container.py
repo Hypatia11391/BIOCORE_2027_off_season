@@ -1,4 +1,4 @@
-from wpilib import Joystick
+from wpilib import Joystick, SmartDashboard
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 from commands2 import Command
@@ -46,5 +46,8 @@ class RobotContainer:
         self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
 
+        # SmartDashboard.putStringArray("Auto List", ["Drive Forward 5m.auto"])
+
     def get_autonomous_command(self) -> Command:
-        return PathPlannerAuto("Drive Forward 5m.auto")
+        return PathPlannerAuto("Drive Forward 5m")
+        # return PathPlannerAuto(SmartDashboard.getString("Auto Selector", "Drive Forward 5m.auto"))
