@@ -1,28 +1,28 @@
-from wpilib import Joystick, SmartDashboard
-from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 from commands2 import Command
 from pathplannerlib.auto import PathPlannerAuto
+from wpilib import Joystick
+from wpimath.estimator import MecanumDrivePoseEstimator3d
+from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
-from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
-from src.subsystems.mechanisms.intake import Intake
-from src.subsystems.mechanisms.feed import Feed
-from src.subsystems.mechanisms.kicker import Kicker
-from src.subsystems.mechanisms.shooter import Shooter
-from src.navx.navx import Navx
+import src.constants as consts
+import src.subsystems.drive.drive_train_constants as drive_consts
 from src.commands.drive_telop import DriveTelop
 from src.commands.operate_telop import OperateTelop
-import src.subsystems.drive.drive_train_constants as drive_constants
-import src.constants as constants
+from src.navx.navx import Navx
+from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
+from src.subsystems.mechanisms.feed import Feed
+from src.subsystems.mechanisms.intake import Intake
+from src.subsystems.mechanisms.kicker import Kicker
+from src.subsystems.mechanisms.shooter import Shooter
 
 
 class RobotContainer:
     def __init__(self) -> None:
         self.kinematics = MecanumDriveKinematics(
-            drive_constants.FRONT_LEFT_LOCATION,
-            drive_constants.FRONT_RIGHT_LOCATION,
-            drive_constants.REAR_LEFT_LOCATION,
-            drive_constants.REAR_RIGHT_LOCATION,
+            drive_consts.FRONT_LEFT_LOCATION,
+            drive_consts.FRONT_RIGHT_LOCATION,
+            drive_consts.REAR_LEFT_LOCATION,
+            drive_consts.REAR_RIGHT_LOCATION,
         )
 
         self.navx = Navx()
@@ -31,7 +31,7 @@ class RobotContainer:
             self.kinematics,
             self.navx.get_full_rotation(),
             MecanumDriveWheelPositions(),
-            constants.STARTING_POSE,
+            consts.STARTING_POSE,
         )
 
         self.drive = DriveTrainMecanum(self.pose_estimator, self.navx)

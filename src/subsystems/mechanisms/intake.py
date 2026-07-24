@@ -1,15 +1,16 @@
 from commands2 import Subsystem
-from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode
+from rev import SparkLowLevel, SparkMaxConfig
 
 import src.subsystems.mechanisms.intake_constants as intake_consts
+from src.subsystems.abstract_controllers.position_controller_1d import Controller1d
 
 
 class Intake(Subsystem):
     def __init__(self) -> None:
         super().__init__()
 
-        self.intake_lift = SparkMax(intake_consts.INTAKE_LIFT_ID, SparkLowLevel.MotorType.kBrushless)
-        self.intake_feed = SparkMax(intake_consts.INTAKE_FEED_ID, SparkLowLevel.MotorType.kBrushless)
+        self.intake_lift = Controller1d(intake_consts.INTAKE_LIFT_ID, SparkLowLevel.MotorType.kBrushless)
+        self.intake_feed = Controller1d(intake_consts.INTAKE_FEED_ID, SparkLowLevel.MotorType.kBrushless)
 
         lift_config = SparkMaxConfig()
         lift_config.inverted(intake_consts.INTAKE_LIFT_INVERTED)
@@ -22,18 +23,7 @@ class Intake(Subsystem):
         lift_config.closedLoop.pid(intake_consts.INTAKE_LIFT_kP, intake_consts.INTAKE_LIFT_kI, intake_consts.INTAKE_LIFT_kD)
         lift_config.closedLoop.outputRange(-2.0, 2.0)
 
-        self.intake_lift.configureAsync(
-            lift_config,
-            ResetMode.kNoResetSafeParameters,
-            PersistMode.kPersistParameters,
-        )
-
-        self.lift_encoder = self.intake_lift.getEncoder()
-        self.lift_loop = self.intake_lift.getClosedLoopController()
-
-        self.init_pos = self.lift_encoder.getPosition()
-        self.target_pos = self.init_pos
-        # self.stall_detector = StallDetector()
+        self.intake_lift.config(lift_config)
 
         feed_config = SparkMaxConfig()
         feed_config.inverted(intake_consts.INTAKE_FEED_INVERTED)
@@ -41,31 +31,19 @@ class Intake(Subsystem):
         feed_config.smartCurrentLimit(intake_consts.INTAKE_FEED_SMART_LIMIT)
         feed_config.voltageCompensation(intake_consts.INTAKE_FEED_VOLTAGE_COMPENSATION)
 
-        self.intake_feed.configureAsync(
-            feed_config,
-            ResetMode.kNoResetSafeParameters,
-            PersistMode.kPersistParameters,
-        )
+        self.intake_feed.config(feed_config)
 
     # In degrees
     def set_lift_position(self, target_pos: float) -> None:
-        # self.target_pos = max(intake_consts.INTAKE_LIFT_UP_POS, min(target_pos, intake_consts.INTAKE_LIFT_DOWN_POS))  # Clamp TODO: once have more accurate method of position detection add back
-        self.target_pos = target_pos + self.init_pos
-
-        current_pos = self.lift_encoder.getPosition()
-        # self.stall_detector.update(current_pos)
-        if abs(current_pos - self.target_pos) < intake_consts.INTAKE_LIFT_POSITION_THRESHOLD:  # or self.stall_detector.is_stalling(self.target_pos):
-            self.target_pos = current_pos
-
-        self.lift_loop.setSetpoint(self.target_pos, SparkLowLevel.ControlType.kPosition)
+        self.intake_lift.set_target_pos(target_pos, SparkLowLevel.ControlType.kPosition)
 
     # Speed between -1, 1
     def set_feed_speed(self, speed: float) -> None:
-        self.intake_feed.set(speed)
+        self.intake_feed.set_target_pos(speed, SparkLowLevel.ControlType.kVelocity)
 
     def stop(self) -> None:
-        self.intake_lift.stopMotor()
-        self.intake_feed.stopMotor()
+        self.intake_lift.stop()
+        self.intake_feed.stop()
 
 
 # class StallDetector:
