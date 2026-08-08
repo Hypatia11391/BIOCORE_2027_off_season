@@ -15,6 +15,30 @@
           "data": {
             "pathName": "Drive Backward 5m"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Drive Forward 5m"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Drive Backward 5m"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Drive Forward 5m"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Drive Backward 5m"
+          }
         }
       ]
     }

@@ -1,8 +1,9 @@
-from wpimath.geometry import Rotation3d
-from commands2 import Subsystem
-from navx import AHRS
-
 from math import radians
+
+from commands2 import Subsystem
+from wpimath.geometry import Rotation3d
+
+from navx import AHRS
 
 
 class Navx(Subsystem):
