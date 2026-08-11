@@ -2,6 +2,7 @@ from wpimath.geometry import Pose3d, Rotation3d
 from commands2 import Subsystem
 import ntcore
 from typing import override
+import numpy as np
 
 
 class VisionServer(Subsystem):
@@ -12,12 +13,13 @@ class VisionServer(Subsystem):
     
     @override
     def periodic(self):
-        for update in self.pose_sub.readQueue() :
-            # I dont know in what format the vision client will send the pose in so this may need to be changed
-            x,y,z,roll,pitch,yaw, xdev,ydev,zdev,headingdev, timestamp = update.value
-            print(f'Recieved measurement: {x=},{y=},{z=}, {roll=},{pitch=},{yaw=}, {xdev=},{ydev=},{zdev=},{headingdev=}, {timestamp=}')
+        for update in self.pose_sub.readQueue():
+            timestamp, camera_id, apriltag_set_number, *data = update.value
+            pose = np.array(data[:16], dtype=np.float64).reshape((4,4), order='F')  # order='F' specifies column-major order, which is how cpp Eigen library stores it by default and is therefore  how it is serialized on the raspberry pi side
+            uncertainty = np.array(data[16:], dtype=np.float64)
+
             self.pose_estimator.addVisionMeasurement(
-                Pose3d(x,y,z, Rotation3d(roll,pitch,yaw)),
+                Pose3d.from_matrix(pose),  # Im not fully sure this is the right way to construct the pose
                 timestamp,
-                (xdev,ydev,zdev,headingdev)
+                tuple(uncertainty[:3])+(uncertainty[3:].mean(),)  # Is mean the right operation here?
             )
