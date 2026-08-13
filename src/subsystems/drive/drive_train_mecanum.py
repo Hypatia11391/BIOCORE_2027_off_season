@@ -74,6 +74,10 @@ class DriveTrainMecanum(Subsystem):
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
+        forward_speed = max(-0.1, min(forward_speed, 0.1))
+        strafe_speed = max(-0.1, min(strafe_speed, 0.1))
+        turn_speed = max(-0.1, min(turn_speed, 0.1))
+
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
 
     def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
