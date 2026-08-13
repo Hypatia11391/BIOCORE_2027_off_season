@@ -1,8 +1,9 @@
-from wpimath.geometry import Rotation3d
-from commands2 import Subsystem
-from navx import AHRS
-
 from math import radians
+
+from commands2 import Subsystem
+from wpimath.geometry import Rotation2d, Rotation3d
+
+from navx import AHRS
 
 
 class Navx(Subsystem):
@@ -17,6 +18,9 @@ class Navx(Subsystem):
 
     def get_heading(self) -> float:
         return self.navx.getFusedHeading()
+
+    def get_2d_rotation(self) -> Rotation2d:
+        return self.navx.getRotation2d()
 
     def get_full_rotation(self) -> Rotation3d:
         return Rotation3d(

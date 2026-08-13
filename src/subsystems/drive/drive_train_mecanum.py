@@ -1,18 +1,18 @@
-from wpilib import DriverStation, SmartDashboard
-from wpilib.drive import MecanumDrive
-from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds, ChassisSpeeds
-from wpimath.geometry import Pose2d, Pose3d
+from typing import override
+
+import rev
 from commands2 import Subsystem
 from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
 from pathplannerlib.config import RobotConfig
-import rev
+from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
+from wpilib import DriverStation
+from wpilib.drive import MecanumDrive
+from wpimath.estimator import MecanumDrivePoseEstimator3d
+from wpimath.geometry import Pose2d, Pose3d
+from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
 
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, FRONT_LEFT_LOCATION, FRONT_RIGHT_LOCATION, REAR_LEFT_LOCATION, REAR_RIGHT_LOCATION, MAX_SPEED, MAX_ANGULAR_SPEED
 from src.navx.navx import Navx
-
-from typing import override
+from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ANGULAR_SPEED, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
 
 class DriveTrainMecanum(Subsystem):
@@ -74,7 +74,14 @@ class DriveTrainMecanum(Subsystem):
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
+        forward_speed = max(-0.1, min(forward_speed, 0.1))
+        strafe_speed = max(-0.1, min(strafe_speed, 0.1))
+        turn_speed = max(-0.1, min(turn_speed, 0.1))
+
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
+
+    def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
+        self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
 
     def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
         forward_speed = speeds.vx

@@ -1,5 +1,5 @@
-from typing import Final
 from math import pi
+from typing import Final
 
 from wpimath.geometry import Translation2d
 
@@ -49,10 +49,10 @@ DRIVE_ENCODER_CHANNEL_B_REAR_RIGHT: Final[int] = 0
 TURNING_ENCODER_CHANNEL_A_REAR_RIGHT: Final[int] = 0
 TURNING_ENCODER_CHANNEL_B_REAR_RIGHT: Final[int] = 0
 
-FRONT_LEFT_LOCATION: Final[Translation2d] = Translation2d(0.381, 0.381)
-FRONT_RIGHT_LOCATION: Final[Translation2d] = Translation2d(0.381, -0.381)
-REAR_LEFT_LOCATION: Final[Translation2d] = Translation2d(-0.381, 0.381)
-REAR_RIGHT_LOCATION: Final[Translation2d] = Translation2d(-0.381, -0.381)
+FRONT_LEFT_LOCATION: Final[Translation2d] = Translation2d(0.180, 0.340)
+FRONT_RIGHT_LOCATION: Final[Translation2d] = Translation2d(0.180, -0.340)
+REAR_LEFT_LOCATION: Final[Translation2d] = Translation2d(-0.180, 0.340)
+REAR_RIGHT_LOCATION: Final[Translation2d] = Translation2d(-0.180, -0.340)
 
 MAX_VELOCITY: Final[float] = 0
 MAX_ANGULAR_ACCELERATION: Final[float] = 0
