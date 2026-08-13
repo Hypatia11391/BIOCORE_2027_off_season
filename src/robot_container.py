@@ -49,5 +49,5 @@ class RobotContainer:
         # SmartDashboard.putStringArray("Auto List", ["Drive Forward 5m.auto"])
 
     def get_autonomous_command(self) -> Command:
-        return PathPlannerAuto("Drive Forward 5m")
+        return PathPlannerAuto("Drive Back and Forth 5m")
         # return PathPlannerAuto(SmartDashboard.getString("Auto Selector", "Drive Forward 5m.auto"))
