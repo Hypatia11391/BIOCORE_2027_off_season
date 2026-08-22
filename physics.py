@@ -1,6 +1,7 @@
 from wpilib.simulation import SimDeviceSim, AnalogGyroSim
 from pyfrc.physics.core import PhysicsInterface
 from pyfrc.physics import drivetrains
+from wpimath.kinematics import MecanumDriveWheelSpeeds
 
 from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, MAX_ANGULAR_SPEED, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
@@ -9,9 +10,7 @@ class PhysicsEngine:
     def __init__(self, physics_controller: PhysicsInterface, robot: "Robot"):
         self.physics_controller = physics_controller
         self.robot = robot
-        
-        self.kinematics = MecanumDriveKinematics(
-        
+                
         sparkmax_str = "SPARK MAX [{}]"
         self.front_left_sim = SimDeviceSim(sparkmax_str.format(FRONT_LEFT_ID))
         self.front_right_sim = SimDeviceSim(sparkmax_str.format(FRONT_RIGHT_ID))
