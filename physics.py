@@ -44,21 +44,21 @@ class PhysicsEngine:
         rr_radps = self.rear_right_output.get() * MAX_ANGULAR_SPEED
         
         # Set velocity (rpm)
-        radps_to_rpm = 60 / pi
+        radps_to_rpm = 60 / (2*pi)
         self.front_left_velocity.set(fl_radps * radps_to_rpm)
         self.front_right_velocity.set(fr_radps * radps_to_rpm)
         self.rear_left_velocity.set(rl_radps * radps_to_rpm)
         self.rear_right_velocity.set(rr_radps * radps_to_rpm)
         
         # Advance position (rotations per simualtion frame)
-        radps_to_rpf = tm_diff / pi
+        radps_to_rpf = tm_diff / (2*pi)
         self.front_left_position.set(self.front_left_position.get() + fl_radps * radps_to_rpf)
         self.front_right_position.set(self.front_right_position.get() + fr_radps * radps_to_rpf)
         self.rear_left_position.set(self.rear_left_position.get() + rl_radps * radps_to_rpf)
         self.rear_right_position.set(self.rear_right_position.get() + rr_radps * radps_to_rpf)
         
         # Compute wheel speeds (m/s), chassis speeds and drive simulation
-        radps_to_mps = (1/pi) * WHEEL_GEAR_RATIO * WHEEL_CIRCUMFERENCE
+        radps_to_mps = (1/(2*pi)) * WHEEL_GEAR_RATIO * WHEEL_CIRCUMFERENCE
         wheel_speeds = MecanumDriveWheelSpeeds(
             fl_radps * radps_to_mps,
             fr_radps * radps_to_mps,
@@ -69,4 +69,4 @@ class PhysicsEngine:
         self.physics_controller.drive(chassis_speeds, tm_diff)
         
         # Advance simulated gyro heading
-        self.gyro_sim.setAngle(self.gyro_sim.getAngle() + chassis_speeds.omega * tm_diff)
+        self.gyro_sim.setAngle(self.gyro_sim.getAngle() + chassis_speeds.omega*tm_diff*(180/pi))  # convert from rad/s to deg/frame

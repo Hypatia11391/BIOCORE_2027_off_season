@@ -8,6 +8,7 @@ from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
 from pathplannerlib.config import RobotConfig
 import rev
+from wpilib import SmartDashboard, Field2d
 
 from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, FRONT_LEFT_LOCATION, FRONT_RIGHT_LOCATION, REAR_LEFT_LOCATION, REAR_RIGHT_LOCATION, MAX_SPEED, MAX_ANGULAR_SPEED
 from src.navx.navx import Navx
@@ -70,6 +71,9 @@ class DriveTrainMecanum(Subsystem):
             self,
         )
 
+        self.field = Field2d()
+        SmartDashboard.putData("Field", self.field)
+
     def should_flip_path(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
@@ -102,6 +106,7 @@ class DriveTrainMecanum(Subsystem):
                 self.navx.get_full_rotation(),
                 self.get_wheel_positions(),
             )
+            self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
 
         SmartDashboard.putNumber("Gyro", self.navx.get_heading())
         SmartDashboard.putNumberArray(
