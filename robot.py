@@ -1,3 +1,4 @@
+import os
 import wpilib
 from commands2 import CommandScheduler
 
@@ -28,6 +29,15 @@ class Robot(wpilib.TimedRobot):
         pass
 
     def testPeriodic(self) -> None:
+        pass
+    
+    def simulationInit(self) -> None:
+        if os.environ.get("ROBOT_SIM_MODE")=="autonomous":
+            self.autonomousInit()
+        else:
+            self.teleopInit()
+
+    def simulationPeriodic(self) -> None:
         pass
 
     def disabledPeriodic(self) -> None:
