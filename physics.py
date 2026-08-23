@@ -1,3 +1,5 @@
+from math import pi
+
 from wpilib.simulation import SimDeviceSim, AnalogGyroSim
 from pyfrc.physics.core import PhysicsInterface
 from pyfrc.physics import drivetrains
@@ -22,6 +24,16 @@ class PhysicsEngine:
         self.rear_left_output = self.rear_left_sim.getDouble("Applied Output")
         self.rear_right_output = self.rear_right_sim.getDouble("Applied Output")
         
+        self.front_left_velocity = self.front_left_sim.getDouble("Velocity")
+        self.front_right_velocity = self.front_right_sim.getDouble("Velocity")
+        self.rear_left_velocity = self.rear_left_sim.getDouble("Velocity")
+        self.rear_right_velocity = self.rear_right_sim.getDouble("Velocity")
+
+        self.front_left_position = self.front_left_sim.getDouble("Position")
+        self.front_right_position = self.front_right_sim.getDouble("Position")
+        self.rear_left_position = self.rear_left_sim.getDouble("Position")
+        self.rear_right_position = self.rear_right_sim.getDouble("Position")
+
         self.gyro_sim = AnalogGyroSim(0)
     
     def update_sim(self, now: float, tm_diff: float):
@@ -33,25 +45,25 @@ class PhysicsEngine:
         
         # Set velocity (rpm)
         radps_to_rpm = 60 / pi
-        self.front_left_sim.setVelocity(fl_radps * radps_to_rpm)
-        self.front_right_sim.setVelocity(fr_radps * radps_to_rpm)
-        self.rear_left_sim.setVelocity(rl_radps * radps_to_rpm)
-        self.rear_right_sim.setVelocity(rr_radps * radps_to_rpm)
+        self.front_left_velocity.set(fl_radps * radps_to_rpm)
+        self.front_right_velocity.set(fr_radps * radps_to_rpm)
+        self.rear_left_velocity.set(rl_radps * radps_to_rpm)
+        self.rear_right_velocity.set(rr_radps * radps_to_rpm)
         
         # Advance position (rotations per simualtion frame)
         radps_to_rpf = tm_diff / pi
-        self.front_left_sim.addPosition(fl_radps * radps_to_rpf)
-        self.front_right_sim.addPosition(fr_radps * radps_to_rpf)
-        self.rear_left_sim.addPosition(rl_radps * radps_to_rpf)
-        self.rear_right_sim.addPosition(rr_radps * radps_to_rpf)
+        self.front_left_position.set(self.front_left_position.get() + fl_radps * radps_to_rpf)
+        self.front_right_position.set(self.front_right_position.get() + fr_radps * radps_to_rpf)
+        self.rear_left_position.set(self.rear_left_position.get() + rl_radps * radps_to_rpf)
+        self.rear_right_position.set(self.rear_right_position.get() + rr_radps * radps_to_rpf)
         
         # Compute wheel speeds (m/s), chassis speeds and drive simulation
         radps_to_mps = (1/pi) * WHEEL_GEAR_RATIO * WHEEL_CIRCUMFERENCE
         wheel_speeds = MecanumDriveWheelSpeeds(
             fl_radps * radps_to_mps,
-            fr_speed * radps_to_mps,
-            rl_speed * radps_to_mps,
-            rr_speed * radps_to_mps
+            fr_radps * radps_to_mps,
+            rl_radps * radps_to_mps,
+            rr_radps * radps_to_mps
         )
         chassis_speeds = self.robot.robot_container.drive.kinematics.toChassisSpeeds(wheel_speeds)
         self.physics_controller.drive(chassis_speeds, tm_diff)
