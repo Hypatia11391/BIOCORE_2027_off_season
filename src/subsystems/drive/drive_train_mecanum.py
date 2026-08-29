@@ -85,6 +85,9 @@ class DriveTrainMecanum(Subsystem):
 
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
 
+    def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
+        self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
+
     def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
         forward_speed = speeds.vx
         strafe_speed = speeds.vy
