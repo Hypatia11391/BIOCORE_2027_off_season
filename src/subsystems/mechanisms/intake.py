@@ -1,5 +1,5 @@
 from commands2 import Subsystem
-from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode
+from rev import PersistMode, ResetMode, SparkLowLevel, SparkMax, SparkMaxConfig
 
 import src.subsystems.mechanisms.intake_constants as intake_consts
 
@@ -50,7 +50,7 @@ class Intake(Subsystem):
     # In degrees
     def set_lift_position(self, target_pos: float) -> None:
         # self.target_pos = max(intake_consts.INTAKE_LIFT_UP_POS, min(target_pos, intake_consts.INTAKE_LIFT_DOWN_POS))  # Clamp TODO: once have more accurate method of position detection add back
-        self.target_pos = target_pos + self.init_pos
+        self.target_pos = target_pos * ((48 * (50 / 18)) / 360) + self.init_pos
 
         current_pos = self.lift_encoder.getPosition()
         # self.stall_detector.update(current_pos)
@@ -66,6 +66,9 @@ class Intake(Subsystem):
     def stop(self) -> None:
         self.intake_lift.stopMotor()
         self.intake_feed.stopMotor()
+
+    # def periodic(self) -> None:
+    #     print(self.target_pos, self.target_pos - self.lift_encoder.getPosition(), self.intake_lift.getAppliedOutput())
 
 
 # class StallDetector:

@@ -20,6 +20,7 @@ class Robot(wpilib.TimedRobot):
 
     def teleopInit(self) -> None:
         self.autonomous_command.cancel()
+        self.robot_container.zero_pose()
 
     def teleopPeriodic(self) -> None:
         pass

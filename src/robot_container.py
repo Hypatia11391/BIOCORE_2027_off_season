@@ -1,19 +1,19 @@
-from wpilib import Joystick, SmartDashboard
-from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 from commands2 import Command
 from pathplannerlib.auto import PathPlannerAuto
+from wpilib import Joystick
+from wpimath.estimator import MecanumDrivePoseEstimator3d
+from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
-from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
-from src.subsystems.mechanisms.intake import Intake
-from src.subsystems.mechanisms.feed import Feed
-from src.subsystems.mechanisms.kicker import Kicker
-from src.subsystems.mechanisms.shooter import Shooter
-from src.navx.navx import Navx
+import src.subsystems.drive.drive_train_constants as drive_constants
+from src import constants
 from src.commands.drive_telop import DriveTelop
 from src.commands.operate_telop import OperateTelop
-import src.subsystems.drive.drive_train_constants as drive_constants
-import src.constants as constants
+from src.navx.navx import Navx
+from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
+from src.subsystems.mechanisms.feed import Feed
+from src.subsystems.mechanisms.intake import Intake
+from src.subsystems.mechanisms.kicker import Kicker
+from src.subsystems.mechanisms.shooter import Shooter
 
 
 class RobotContainer:
@@ -51,3 +51,8 @@ class RobotContainer:
     def get_autonomous_command(self) -> Command:
         return PathPlannerAuto("Drive Forward 5m")
         # return PathPlannerAuto(SmartDashboard.getString("Auto Selector", "Drive Forward 5m.auto"))
+
+    def zero_pose(self) -> None:
+        self.pose_estimator.resetPose(constants.STARTING_POSE)
+        self.navx.zero_yaw()
+        self.drive.zero_encoder_positions()

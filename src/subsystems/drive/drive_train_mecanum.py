@@ -1,18 +1,19 @@
+from typing import override
+
+import rev
+from commands2 import Subsystem
+from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.config import RobotConfig
+from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
 from wpilib import DriverStation, SmartDashboard
 from wpilib.drive import MecanumDrive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds, ChassisSpeeds
 from wpimath.geometry import Pose2d, Pose3d
-from commands2 import Subsystem
-from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
-from pathplannerlib.config import RobotConfig
-import rev
+from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
 
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, FRONT_LEFT_LOCATION, FRONT_RIGHT_LOCATION, REAR_LEFT_LOCATION, REAR_RIGHT_LOCATION, MAX_SPEED, MAX_ANGULAR_SPEED
 from src.navx.navx import Navx
-
-from typing import override
+from src.network_server.network_server import NetworkServer
+from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ANGULAR_SPEED, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
 
 class DriveTrainMecanum(Subsystem):
@@ -26,9 +27,9 @@ class DriveTrainMecanum(Subsystem):
 
         config = rev.SparkMaxConfig()
 
-        conversion_ratio = WHEEL_CIRCUMFERENCE / WHEEL_GEAR_RATIO
-        config.encoder.positionConversionFactor(conversion_ratio)
-        config.encoder.velocityConversionFactor(conversion_ratio)
+        # conversion_ratio = WHEEL_CIRCUMFERENCE / WHEEL_GEAR_RATIO
+        # config.encoder.positionConversionFactor(conversion_ratio)
+        # config.encoder.velocityConversionFactor(conversion_ratio / 60)
 
         self.config_drive_motor(self.left_front_drive, False)
         self.config_drive_motor(self.right_front_drive, True)
@@ -64,7 +65,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
-            PPHolonomicDriveController(PIDConstants(5.0, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0)),
+            PPHolonomicDriveController(PIDConstants(5.0, 0.0005, 0.0), PIDConstants(5.0, 0.0005, 0.0)),
             config,
             self.should_flip_path,
             self,
@@ -74,6 +75,14 @@ class DriveTrainMecanum(Subsystem):
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
+        # print(forward_speed, strafe_speed, turn_speed)
+
+        clamp = 0.25
+
+        forward_speed = max(min(forward_speed, clamp), -clamp)
+        strafe_speed = max(min(strafe_speed, clamp), -clamp)
+        turn_speed = max(min(turn_speed, clamp), -clamp)
+
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
 
     def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
@@ -85,12 +94,12 @@ class DriveTrainMecanum(Subsystem):
         strafe_speed_percent = strafe_speed / MAX_SPEED
         turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
 
-        print(f"{forward_speed=}")
-        print(f"{strafe_speed=}")
-        print(f"{turn_speed=}")
-        print(f"{forward_speed_percent=}")
-        print(f"{strafe_speed_percent=}")
-        print(f"{turn_speed_percent=}")
+        # print(f"{forward_speed=}")
+        # print(f"{strafe_speed=}")
+        # print(f"{turn_speed=}")
+        # print(f"{forward_speed_percent=}")
+        # print(f"{strafe_speed_percent=}")
+        # print(f"{turn_speed_percent=}")
 
         self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
         # self.drive(0, 0, 0)
@@ -114,6 +123,29 @@ class DriveTrainMecanum(Subsystem):
             ],
         )
 
+        NetworkServer.getInstance().set_float("x", self.get_pose_2d().x)
+        NetworkServer.getInstance().set_float("y", self.get_pose_2d().y)
+        NetworkServer.getInstance().set_float("a", self.get_pose_2d().rotation().degrees())
+
+        # if RobotState.isEnabled():
+        #     pose = self.pose_estimator.getEstimatedPosition()
+
+        #     print("New thingy, printing pose then wheel positions")
+        #     print(pose.x, pose.y, pose.z, self.navx.get_heading())
+
+        #     positions = self.get_wheel_positions()
+        #     print(positions.frontLeft, positions.frontRight, positions.rearLeft, positions.rearRight)
+
+        #     speeds = self.get_relative_speeds()
+        #     print("speeds:")
+        #     print(
+        #         self.left_front_encoder.getVelocity(),
+        #         self.right_front_encoder.getVelocity(),
+        #         self.left_rear_encoder.getVelocity(),
+        #         self.right_rear_encoder.getVelocity(),
+        #     )
+        #     print(speeds.vx, speeds.vy, speeds.omega)
+
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()
 
@@ -123,6 +155,12 @@ class DriveTrainMecanum(Subsystem):
         positions.rearRight = self.right_rear_encoder.getPosition()
 
         return positions
+
+    def zero_encoder_positions(self) -> None:
+        self.left_front_encoder.setPosition(0)
+        self.right_front_encoder.setPosition(0)
+        self.left_rear_encoder.setPosition(0)
+        self.right_rear_encoder.setPosition(0)
 
     def get_wheel_speeds(self) -> MecanumDriveWheelSpeeds:
         return MecanumDriveWheelSpeeds(
@@ -154,6 +192,6 @@ class DriveTrainMecanum(Subsystem):
 
         conversion_ratio = WHEEL_CIRCUMFERENCE / WHEEL_GEAR_RATIO
         config.encoder.positionConversionFactor(conversion_ratio)
-        config.encoder.velocityConversionFactor(conversion_ratio)
+        config.encoder.velocityConversionFactor(conversion_ratio / 60)
 
         motor.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
