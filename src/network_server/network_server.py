@@ -14,8 +14,13 @@ class NetworkServer:
 
         self.table = inst.getTable("datatable")
 
-        self.publishers: dict[str, ntcore.DoublePublisher] = {}
-        self.values = {}
+        self.double_publishers: dict[str, ntcore.DoublePublisher] = {}
+        self.double_values: dict[str, float] = {}
+
+        self.string_list_publishers: dict[str, ntcore.StringArrayPublisher] = {}
+        self.string_list_values: dict[str, list[str]] = {}
+
+        self.string_subsribers: dict[str, ntcore.StringSubscriber] = {}
 
     @classmethod
     def getInstance(cls) -> Self:
@@ -24,9 +29,23 @@ class NetworkServer:
         return cls._instance
 
     def set_float(self, key: str, value: float) -> None:
-        self.values[key] = value
+        self.double_values[key] = value
 
-        if key not in self.publishers:
-            self.publishers[key] = self.table.getDoubleTopic(key).publish()
+        if key not in self.double_publishers:
+            self.double_publishers[key] = self.table.getDoubleTopic(key).publish()
 
-        self.publishers[key].set(value)
+        self.double_publishers[key].set(value)
+
+    def set_string_list(self, key: str, list: list[str]):
+        self.string_list_values[key] = list
+
+        if key not in self.string_list_publishers:
+            self.string_list_publishers[key] = self.table.getStringArrayTopic(key).publish()
+
+        self.string_list_publishers[key].set(list)
+
+    def get_string(self, key: str) -> str:
+        if key not in self.string_subsribers:
+            self.string_subsribers[key] = self.table.getStringTopic(key).subscribe("")
+
+        return self.string_subsribers[key].get()

@@ -9,6 +9,7 @@ import src.subsystems.drive.drive_train_constants as drive_consts
 from src.commands.drive_telop import DriveTelop
 from src.commands.operate_telop import OperateTelop
 from src.navx.navx import Navx
+from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
 from src.subsystems.mechanisms.feed import Feed
 from src.subsystems.mechanisms.intake import Intake
@@ -46,11 +47,10 @@ class RobotContainer:
         self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
 
-        # SmartDashboard.putStringArray("Auto List", ["Drive Forward 5m.auto"])
+        NetworkServer.getInstance().set_string_list("auto-list", ["Drive Back and Forth 5m"])
 
     def get_autonomous_command(self) -> Command:
-        return PathPlannerAuto("Drive Back and Forth 5m")
-        # return PathPlannerAuto(SmartDashboard.getString("Auto Selector", "Drive Forward 5m.auto"))
+        return PathPlannerAuto(NetworkServer.getInstance().get_string("selected-auto"))
 
     def zero_pose(self) -> None:
         self.pose_estimator.resetPose(consts.STARTING_POSE)

@@ -1,7 +1,10 @@
+from typing import override
+
 from commands2 import Subsystem
 from rev import PersistMode, ResetMode, SparkBase, SparkLowLevel, SparkMax, SparkMaxConfig
 
 import src.subsystems.mechanisms.shooter_constants as shooter_consts
+from src.network_server.network_server import NetworkServer
 
 
 class Shooter(Subsystem):
@@ -73,3 +76,10 @@ class Shooter(Subsystem):
 
     def get_right_voltage(self) -> float:
         return self.motor_right.getBusVoltage() * self.motor_right.getAppliedOutput()
+
+    @override
+    def periodic(self) -> None:
+        NetworkServer.getInstance().set_float("shooter-left-rpm", self.left_encoder.getVelocity())
+        NetworkServer.getInstance().set_float("shooter-left-target-rpm", self.target_rpm_left)
+        NetworkServer.getInstance().set_float("shooter-right-rpm", self.right_encoder.getVelocity())
+        NetworkServer.getInstance().set_float("shooter-right-target-rpm", self.target_rpm_right)

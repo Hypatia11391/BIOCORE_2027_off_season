@@ -5,7 +5,7 @@ from commands2 import Subsystem
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
-from wpilib import DriverStation, SmartDashboard
+from wpilib import DriverStation
 from wpilib.drive import MecanumDrive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.geometry import Pose2d, Pose3d
@@ -115,20 +115,11 @@ class DriveTrainMecanum(Subsystem):
                 self.get_wheel_positions(),
             )
 
-        SmartDashboard.putNumber("Gyro", self.navx.get_heading())
-        SmartDashboard.putNumberArray(
-            "RobotDrive Motors",
-            [
-                self.left_front_encoder.getVelocity(),
-                self.right_front_encoder.getVelocity(),
-                self.left_rear_encoder.getVelocity(),
-                self.right_rear_encoder.getVelocity(),
-            ],
-        )
-
         NetworkServer.getInstance().set_float("x", self.get_pose_2d().x)
         NetworkServer.getInstance().set_float("y", self.get_pose_2d().y)
-        NetworkServer.getInstance().set_float("a", self.get_pose_2d().rotation().degrees())
+        NetworkServer.getInstance().set_float("dx", self.get_relative_speeds().vx)
+        NetworkServer.getInstance().set_float("dy", self.get_relative_speeds().vy)
+        NetworkServer.getInstance().set_float("heading", self.get_pose_2d().rotation().degrees())
 
         # if RobotState.isEnabled():
         #     pose = self.pose_estimator.getEstimatedPosition()
