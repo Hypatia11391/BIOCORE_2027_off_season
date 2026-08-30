@@ -39,5 +39,7 @@ class Robot(wpilib.TimedRobot):
         CommandScheduler.getInstance().run()
         NetworkServer.getInstance().set_float("v", wpilib.RobotController.getBatteryVoltage())
 
+        self.robot_container.periodic()
+
     def simulationPeriodic(self) -> None:
         pass

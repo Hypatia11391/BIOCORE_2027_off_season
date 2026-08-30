@@ -12,7 +12,6 @@ from wpimath.geometry import Pose2d, Pose3d
 from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
 
 from src.navx.navx import Navx
-from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ANGULAR_SPEED, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
 
@@ -114,12 +113,6 @@ class DriveTrainMecanum(Subsystem):
                 self.navx.get_full_rotation(),
                 self.get_wheel_positions(),
             )
-
-        NetworkServer.getInstance().set_float("x", self.get_pose_2d().x)
-        NetworkServer.getInstance().set_float("y", self.get_pose_2d().y)
-        NetworkServer.getInstance().set_float("dx", self.get_relative_speeds().vx)
-        NetworkServer.getInstance().set_float("dy", self.get_relative_speeds().vy)
-        NetworkServer.getInstance().set_float("heading", self.get_pose_2d().rotation().degrees())
 
         # if RobotState.isEnabled():
         #     pose = self.pose_estimator.getEstimatedPosition()

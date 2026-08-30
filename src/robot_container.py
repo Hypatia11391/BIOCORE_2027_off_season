@@ -1,7 +1,9 @@
 from commands2 import Command
 from pathplannerlib.auto import PathPlannerAuto
-from wpilib import Joystick
+from pathplannerlib.logging import PathPlannerLogging
+from wpilib import DriverStation, Field2d, Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
+from wpimath.geometry import Rotation2d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
 import src.constants as consts
@@ -49,10 +51,28 @@ class RobotContainer:
 
         NetworkServer.getInstance().set_string_list("auto-list", ["Drive Back and Forth 5m"])
 
+        self.field = Field2d()
+
+        self.autonomous_command = Command()
+
+        PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
+
     def get_autonomous_command(self) -> Command:
-        return PathPlannerAuto(NetworkServer.getInstance().get_string("selected-auto"))
+        self.autonomous_command = PathPlannerAuto(NetworkServer.getInstance().get_string("selected-auto"))
+        return self.autonomous_command
 
     def zero_pose(self) -> None:
         self.pose_estimator.resetPose(consts.STARTING_POSE)
         self.navx.zero_yaw()
         self.drive.zero_encoder_positions()
+
+    def periodic(self) -> None:
+        self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
+        self.field.getObject("velocity").setPose(
+            self.drive.get_relative_speeds().vx,
+            self.drive.get_relative_speeds().vy,
+            Rotation2d(self.drive.get_relative_speeds().omega),
+        )
+
+        if not DriverStation.isAutonomous():
+            self.field.getObject("trajectory").setPoses([])
