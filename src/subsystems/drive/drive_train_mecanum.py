@@ -5,7 +5,7 @@ from commands2 import Subsystem
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
-from wpilib import DriverStation
+from wpilib import DriverStation, Field2d, SmartDashboard
 from wpilib.drive import MecanumDrive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.geometry import Pose2d, Pose3d
