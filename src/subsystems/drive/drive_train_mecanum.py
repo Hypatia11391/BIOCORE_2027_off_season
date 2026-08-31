@@ -75,7 +75,7 @@ class DriveTrainMecanum(Subsystem):
         SmartDashboard.putData("Field", self.field)
 
     def should_flip_path(self) -> bool:
-        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
+        return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
