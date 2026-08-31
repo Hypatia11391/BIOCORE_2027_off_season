@@ -1,6 +1,7 @@
 import wpilib
 from commands2 import CommandScheduler
 
+from src.network_server.network_server import NetworkServer
 from src.robot_container import RobotContainer
 
 
@@ -20,6 +21,7 @@ class Robot(wpilib.TimedRobot):
 
     def teleopInit(self) -> None:
         self.autonomous_command.cancel()
+        self.robot_container.zero_pose()
 
     def teleopPeriodic(self) -> None:
         pass
@@ -35,6 +37,9 @@ class Robot(wpilib.TimedRobot):
 
     def robotPeriodic(self) -> None:
         CommandScheduler.getInstance().run()
+        NetworkServer.getInstance().set_float("v", wpilib.RobotController.getBatteryVoltage())
+
+        self.robot_container.periodic()
 
     def simulationPeriodic(self) -> None:
         pass

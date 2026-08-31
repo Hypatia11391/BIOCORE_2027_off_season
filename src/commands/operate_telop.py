@@ -1,15 +1,15 @@
+from typing import override
+
 from commands2 import Command
 from wpilib import Joystick, Timer
 
-from typing import override
-
-from src.subsystems.mechanisms.intake import Intake
-from src.subsystems.mechanisms.feed import Feed
-from src.subsystems.mechanisms.kicker import Kicker
-from src.subsystems.mechanisms.shooter import Shooter
 import src.commands.operation_constants as operation_consts
 from src.buttons import Buttons
 from src.joysticks_axes import JoystickAxes
+from src.subsystems.mechanisms.feed import Feed
+from src.subsystems.mechanisms.intake import Intake
+from src.subsystems.mechanisms.kicker import Kicker
+from src.subsystems.mechanisms.shooter import Shooter
 
 
 class OperateTelop(Command):
@@ -59,22 +59,14 @@ class OperateTelop(Command):
 
         rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
 
-        print(f"{rt_shoot=}")
-        print(f"left voltage: {self.shooter.get_left_voltage()}")
-        print(f"right voltage: {self.shooter.get_right_voltage()}")
-
         if abs(rt_shoot) > 0.08:
             left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
             right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
 
-            print("motor speeds", left_shooter_speed, right_shooter_speed)
-
             self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
 
             if self.shooter.is_at_target_rpm():
-                print("running kicker")
                 self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
-                print("running feed")
                 self.feed.set_feed_speed(operation_consts.FEED_POWER)
 
                 if self.time_at_target_speed < 0.0:

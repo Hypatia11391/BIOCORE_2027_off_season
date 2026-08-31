@@ -1,7 +1,10 @@
+from typing import override
+
 from commands2 import Subsystem
-from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode, SparkBase
+from rev import PersistMode, ResetMode, SparkBase, SparkLowLevel, SparkMax, SparkMaxConfig
 
 import src.subsystems.mechanisms.shooter_constants as shooter_consts
+from src.network_server.network_server import NetworkServer
 
 
 class Shooter(Subsystem):
@@ -37,14 +40,10 @@ class Shooter(Subsystem):
         return self.right_encoder.getVelocity()
 
     def is_at_target_rpm(self) -> bool:
-        print("targed rpm: ", self.target_rpm_left, self.target_rpm_right)
-
         # print(f"{abs(self.get_left_rpm() - self.target_rpm_left) <= shooter_consts.SHOOTER_RPM_TOLERANCE=} and {abs(self.get_right_rpm() - self.target_rpm_right) <= shooter_consts.SHOOTER_RPM_TOLERANCE=}")
         return abs(self.get_left_rpm() - self.target_rpm_left) <= shooter_consts.SHOOTER_RPM_TOLERANCE and abs(self.get_right_rpm() - self.target_rpm_right) <= shooter_consts.SHOOTER_RPM_TOLERANCE
 
     def stop(self) -> None:
-        print("stoping shooter")
-
         self.target_rpm_left = 0.0
         self.target_rpm_right = 0.0
         self.motor_left.stopMotor()
@@ -77,3 +76,10 @@ class Shooter(Subsystem):
 
     def get_right_voltage(self) -> float:
         return self.motor_right.getBusVoltage() * self.motor_right.getAppliedOutput()
+
+    @override
+    def periodic(self) -> None:
+        NetworkServer.getInstance().set_float("shooter-left-rpm", self.left_encoder.getVelocity())
+        NetworkServer.getInstance().set_float("shooter-left-target-rpm", self.target_rpm_left)
+        NetworkServer.getInstance().set_float("shooter-right-rpm", self.right_encoder.getVelocity())
+        NetworkServer.getInstance().set_float("shooter-right-target-rpm", self.target_rpm_right)
