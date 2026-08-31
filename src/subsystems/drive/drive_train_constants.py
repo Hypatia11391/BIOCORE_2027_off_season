@@ -4,7 +4,7 @@ from typing import Final
 from wpimath.geometry import Translation2d
 
 # tune this to cap max output for testing
-MAX_SPEED: Final[float] = 1.0
+MAX_SPEED: Final[float] = 4.25
 
 # CAN IDs (spark max)
 FRONT_LEFT_ID: Final[int] = 9
@@ -19,7 +19,7 @@ WHEEL_CIRCUMFERENCE: Final[float] = pi * WHEEL_DIAMETER
 WHEEL_GEAR_RATIO: Final[float] = 26 / 3  # TODO: Figure out correct gear ratio, might just be 1
 
 # rads/sec
-MAX_ANGULAR_SPEED: Final[float] = pi
+MAX_ANGULAR_SPEED: Final[float] = 4.8 * 2
 
 DRIVE_MOTOR_CHANNEL_FRONT_LEFT: Final[int] = 0
 TURNING_MOTOR_CHANNEL_FRONT_LEFT: Final[int] = 0

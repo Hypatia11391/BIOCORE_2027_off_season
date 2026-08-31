@@ -37,6 +37,7 @@ class Kicker(Subsystem):
         self.motor.set(speed)
 
     def stop(self) -> None:
+        self.set_kicker_speed(0)
         self.motor.stopMotor()
 
     @override
