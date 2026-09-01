@@ -37,6 +37,7 @@ class Feed(Subsystem):
         self.motor.set(speed)
 
     def stop(self) -> None:
+        self.set_feed_speed(0)
         self.motor.stopMotor()
 
     @override

@@ -64,7 +64,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
-            PPHolonomicDriveController(PIDConstants(5.0, 0.0005, 0.0), PIDConstants(5.0, 0.0005, 0.0)),
+            PPHolonomicDriveController(PIDConstants(0.25, 0.0, 0.03), PIDConstants(0.25, 0.0, 0.01)),
             config,
             self.should_flip_path,
             self,
@@ -79,11 +79,11 @@ class DriveTrainMecanum(Subsystem):
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         # print(forward_speed, strafe_speed, turn_speed)
 
-        clamp = 0.25
+        # clamp = 0.25
 
-        forward_speed = max(min(forward_speed, clamp), -clamp)
-        strafe_speed = max(min(strafe_speed, clamp), -clamp)
-        turn_speed = max(min(turn_speed, clamp), -clamp)
+        # forward_speed = max(min(forward_speed, clamp), -clamp)
+        # strafe_speed = max(min(strafe_speed, clamp), -clamp)
+        # turn_speed = max(min(turn_speed, clamp), -clamp)
 
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
 
@@ -97,6 +97,7 @@ class DriveTrainMecanum(Subsystem):
 
         forward_speed_percent = forward_speed / MAX_SPEED
         strafe_speed_percent = strafe_speed / MAX_SPEED
+        print(turn_speed)
         turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
 
         # print(f"{forward_speed=}")

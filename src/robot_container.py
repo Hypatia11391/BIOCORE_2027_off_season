@@ -59,8 +59,16 @@ class RobotContainer:
 
     def get_autonomous_command(self) -> Command:
         return PathPlannerAuto("Drive Forward 1m")
-        # return PathPlannerAuto(SmartDashboard.getString("Auto Selector", "Drive Forward 5m.auto"))
-        self.autonomous_command = PathPlannerAuto(NetworkServer.getInstance().get_string("selected-auto"))
+        
+        command_str = NetworkServer.getInstance().get_string("selected-auto")
+
+        print(command_str)
+
+        if command_str != "":
+            self.autonomous_command = PathPlannerAuto(command_str)
+        else:
+            self.autonomous_command = Command()
+        
         return self.autonomous_command
 
     def zero_pose(self) -> None:
@@ -78,3 +86,5 @@ class RobotContainer:
 
         if not DriverStation.isAutonomous():
             self.field.getObject("trajectory").setPoses([])
+
+        NetworkServer.getInstance().set_field("field", self.field)
