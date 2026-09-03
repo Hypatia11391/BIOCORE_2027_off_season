@@ -34,7 +34,7 @@ class SpatialQuantities2d:
         _, from_default_convention = coordinate_convention.value
         return from_default_convention(self.theta.to(unit))
 
-class SE2d:
+class SE2d(SpatialQuantities2d):
     @override
     def __init__(self, x: pint.Quantity, y: pint.Quantity, linear_coordinate_convention: LinearCoordinateConvention2d, theta: pint.Quantity, angular_coordinate_convention: AngularCoordinateConvention1d):
         super().__init__(x, y, linear_coordinate_convention, theta, angular_coordinate_convention)
@@ -42,7 +42,7 @@ class SE2d:
         assert x.dimensionality == y.dimensionality == LENGTH_DIMENSIONALITY
         assert omega.dimensionality == ANGLE_DIMENSIONALITY
 
-class Velocities2d:
+class Velocities2d(SpatialQuantities2d):
     @override
     def __init__(self, vx: pint.Quantity, vy: pint.Quantity, linear_coordinate_convention: LinearCoordinateConvention2d, omega: pint.Quantity, angular_coordinate_convention: AngularCoordinateConvention1d):
         super().__init__(vx, vy, linear_coordinate_convention, omega, angular_coordinate_convention)
