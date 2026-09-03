@@ -13,6 +13,7 @@ from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDri
 
 from src.navx.navx import Navx
 from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ANGULAR_SPEED, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
+from src.coordinate_systems.coordinate_systems_2d import Velocities2d
 
 
 class DriveTrainMecanum(Subsystem):
@@ -63,7 +64,7 @@ class DriveTrainMecanum(Subsystem):
             self.get_pose_2d,
             self.reset_pose_2d,
             self.get_relative_speeds,
-            lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
+            lambda speeds, feedforwards: self.drive(Velocities2d.from_chassis_speeds(speeds)),
             PPHolonomicDriveController(PIDConstants(0.25, 0.0, 0.03), PIDConstants(0.25, 0.0, 0.01)),
             config,
             self.should_flip_path,
@@ -76,39 +77,11 @@ class DriveTrainMecanum(Subsystem):
     def should_flip_path(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
 
-    def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
-        # print(forward_speed, strafe_speed, turn_speed)
-
-        # clamp = 0.25
-
-        # forward_speed = max(min(forward_speed, clamp), -clamp)
-        # strafe_speed = max(min(strafe_speed, clamp), -clamp)
-        # turn_speed = max(min(turn_speed, clamp), -clamp)
-
-        self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
+    def drive(self, velocities: Velocities2d) -> None:
+        self.robot_drive.driveCartesian(*velocities.linear('linear_speed_percent', LinearCoordinateConvention2d.X_FORWARD_Y_LEFT), velocities.angular('angular_speed_percent', AngularCoordianteConvention2d.CCW_POSITIVE))
 
     def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
-
-    def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
-        forward_speed = speeds.vx
-        strafe_speed = speeds.vy
-        turn_speed = speeds.omega
-
-        forward_speed_percent = forward_speed / MAX_SPEED
-        strafe_speed_percent = strafe_speed / MAX_SPEED
-        print(turn_speed)
-        turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
-
-        # print(f"{forward_speed=}")
-        # print(f"{strafe_speed=}")
-        # print(f"{turn_speed=}")
-        # print(f"{forward_speed_percent=}")
-        # print(f"{strafe_speed_percent=}")
-        # print(f"{turn_speed_percent=}")
-
-        self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
-        # self.drive(0, 0, 0)
 
     @override
     def periodic(self) -> None:
