@@ -22,9 +22,9 @@ class DriveTelop(Command):
 
     @override
     def execute(self) -> None:
-        forward_speed = self.controller.getRawAxis(1)
-        strafe_speed = -self.controller.getRawAxis(0)
-        turn_speed = self.controller.getRawAxis(4)
+        forward_speed = -self.controller.getRawAxis(1)
+        strafe_speed = self.controller.getRawAxis(0)
+        turn_speed = -self.controller.getRawAxis(4)
 
         forward_speed = 0 if abs(forward_speed) < 0.05 else forward_speed
         strafe_speed = 0 if abs(strafe_speed) < 0.05 else strafe_speed
