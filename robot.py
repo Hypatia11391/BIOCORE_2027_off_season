@@ -14,6 +14,7 @@ class Robot(wpilib.TimedRobot):
         self.autonomous_command = self.robot_container.get_autonomous_command()
 
     def autonomousInit(self) -> None:
+        self.robot_container.zero_pose()
         self.autonomous_command = self.robot_container.get_autonomous_command()
 
         CommandScheduler.getInstance().schedule(self.autonomous_command)

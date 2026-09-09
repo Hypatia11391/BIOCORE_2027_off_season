@@ -8,11 +8,11 @@ from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
 from wpilib import DriverStation, Field2d, SmartDashboard
 from wpilib.drive import MecanumDrive
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.geometry import Pose2d, Pose3d
+from wpimath.geometry import Pose2d, Pose3d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
 
 from src.navx.navx import Navx
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ANGULAR_SPEED, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
+from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ANGULAR_SPEED, MIN_ANGULAR_SPEED, MAX_SPEED, MIN_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
 
 class DriveTrainMecanum(Subsystem):
@@ -59,17 +59,17 @@ class DriveTrainMecanum(Subsystem):
 
         config = RobotConfig.fromGUISettings()
 
-        AutoBuilder.configure(
-            self.get_pose_2d,
-            self.reset_pose_2d,
-            self.get_relative_speeds,
-            lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
-            PPHolonomicDriveController(PIDConstants(0.25, 0.0, 0.03), PIDConstants(0.25, 0.0, 0.01)),
-            config,
-            self.should_flip_path,
-            self,
-        )
-
+        # AutoBuilder.configure(
+        #     self.get_pose_2d,
+        #     self.reset_pose_2d,
+        #     self.get_relative_speeds,
+        #     lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
+        #     PPHolonomicDriveController(PIDConstants(0.25, 0.0, 0.03), PIDConstants(0.25, 0.0, 0.01)),
+        #     config,
+        #     self.should_flip_path,
+        #     self,
+        # )
+        
         self.field = Field2d()
         SmartDashboard.putData("Field", self.field)
 
@@ -109,7 +109,7 @@ class DriveTrainMecanum(Subsystem):
 
         self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
         # self.drive(0, 0, 0)
-
+        
     @override
     def periodic(self) -> None:
         if self.pose_estimator is not None:
@@ -187,3 +187,17 @@ class DriveTrainMecanum(Subsystem):
         config.encoder.velocityConversionFactor(conversion_ratio / 60)
 
         motor.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
+    
+    def config_autonomous_command(self, autonomous_command):
+        autonomous_command.configure(
+            self.get_pose_2d,
+            self.get_relative_speeds,
+            self.navx.get_2d_rotation
+            self.drive_from_chassis_speeds,
+            forward_pid_consts = (0.25, 0.0, 0.03, MIN_SPEED, MAX_SPEED),
+            strafe_pid_consts = (0.25, 0.0, 0.03, MIN_SPEED, MAX_SPEED),
+            turn_pid_consts = (0.25, 0.0, 0.01, MIN_ANGULAR_SPEED, MAX_ANGULAR_SPEED),
+        )
+        
+        autonomous_command.target_pose = Pose2d(1, 0, Rotation2d(0))
+        autonomous_command.enabled = True

@@ -10,6 +10,7 @@ import src.constants as consts
 import src.subsystems.drive.drive_train_constants as drive_consts
 from src.commands.drive_telop import DriveTelop
 from src.commands.operate_telop import OperateTelop
+from src.commands.drive_to_pose_autonomous import DriveToPoseAutonomous
 from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
@@ -58,18 +59,20 @@ class RobotContainer:
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
 
     def get_autonomous_command(self) -> Command:
-        return PathPlannerAuto("Drive Forward 1m")
-        
-        command_str = NetworkServer.getInstance().get_string("selected-auto")
-
-        print(command_str)
-
-        if command_str != "":
-            self.autonomous_command = PathPlannerAuto(command_str)
-        else:
-            self.autonomous_command = Command()
-        
+        self.autonomous_command = DriveToPoseAutonomous()
+        self.drive.config_autonomous_command(self.autonomous_command)
         return self.autonomous_command
+        
+        # command_str = NetworkServer.getInstance().get_string("selected-auto")
+
+        # print(command_str)
+
+        # if command_str != "":
+        #     self.autonomous_command = PathPlannerAuto(command_str)
+        # else:
+        #     self.autonomous_command = Command()
+        
+        # return self.autonomous_command
 
     def zero_pose(self) -> None:
         self.pose_estimator.resetPose(consts.STARTING_POSE)
