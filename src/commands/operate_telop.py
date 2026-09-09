@@ -47,6 +47,8 @@ class OperateTelop(Command):
             case operation_consts.IntakeLiftState.DOWN.value:
                 self.intake.set_lift_position(operation_consts.INTAKE_LIFT_POS_DOWN)
 
+        print(self.intake_feed_state)
+
         match self.intake_feed_state:
             case operation_consts.IntakeFeedState.OFF.value:
                 self.intake.set_feed_speed(0)
@@ -60,8 +62,8 @@ class OperateTelop(Command):
         rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
 
         if abs(rt_shoot) > 0.08:
-            left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
-            right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
+            left_shooter_speed = 2145  # rt_shoot * operation_consts.HIGH_LEFT_RPM
+            right_shooter_speed = left_shooter_speed  # rt_shoot * operation_consts.HIGH_RIGHT_RPM
 
             self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
 
@@ -113,6 +115,9 @@ class OperateTelop(Command):
 
         lb_out = self.controller.getRawButtonPressed(Buttons.LB.value)
         rb_in = self.controller.getRawButtonPressed(Buttons.RB.value)
+
+        print(f"{lb_out=}")
+        print(f"{rb_in=}")
 
         if lb_out:
             if self.intake_feed_state != operation_consts.IntakeFeedState.OUT.value:

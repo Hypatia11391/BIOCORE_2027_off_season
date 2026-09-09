@@ -21,5 +21,8 @@ class Controller1d:
 
         self.closed_loop.setSetpoint(self.target_pos, SparkLowLevel.ControlType.kPosition)
 
+    def set_pow(self, pow: float) -> None:
+        self.motor.set(pow)
+
     def stop(self) -> None:
         self.motor.stopMotor()

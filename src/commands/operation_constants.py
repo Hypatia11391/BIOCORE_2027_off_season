@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Final
 
 INTAKE_LIFT_POS_UP: Final[float] = -27
-INTAKE_LIFT_POS_DOWN: Final[float] = -72.5  # TODO: this constant could be wrong
+INTAKE_LIFT_POS_DOWN: Final[float] = -75  # TODO: this constant could be wrong
 
 INTAKE_FEED_PWR: Final[float] = 0.8
 

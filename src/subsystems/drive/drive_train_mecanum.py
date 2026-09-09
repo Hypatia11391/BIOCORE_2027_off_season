@@ -77,7 +77,6 @@ class DriveTrainMecanum(Subsystem):
         # strafe_speed = max(min(strafe_speed, clamp), -clamp)
         # turn_speed = max(min(turn_speed, clamp), -clamp)
 
-        print("Driving")
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
 
     def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
