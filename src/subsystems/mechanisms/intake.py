@@ -67,6 +67,9 @@ class Intake(Subsystem):
         self.intake_lift.stop()
         self.intake_feed.stop()
 
+    def stop_feed(self) -> None:
+        self.intake_feed.stop()
+
     @override
     def periodic(self) -> None:
         NetworkServer.getInstance().set_float("intake-lift-pos", self.lift_encoder.getPosition() / ((48 * (50 / 18)) / 360))

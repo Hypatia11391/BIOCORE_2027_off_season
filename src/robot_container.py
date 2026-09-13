@@ -1,5 +1,5 @@
 from commands2 import Command
-from pathplannerlib.auto import PathPlannerAuto
+from pathplannerlib.auto import NamedCommands, PathPlannerAuto
 from pathplannerlib.logging import PathPlannerLogging
 from wpilib import DriverStation, Field2d, Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
@@ -9,7 +9,9 @@ from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPosition
 import src.constants as consts
 import src.subsystems.drive.drive_train_constants as drive_consts
 from src.commands.drive_telop import DriveTelop
+from src.commands.intake_balls import IntakeBalls
 from src.commands.operate_telop import OperateTelop
+from src.commands.shoot import ShootCommand
 from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
@@ -56,6 +58,9 @@ class RobotContainer:
         self.autonomous_command = Command()
 
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
+
+        NamedCommands.registerCommand("shoot", ShootCommand(self.feed, self.kicker, self.shooter, self.pose_estimator))
+        NamedCommands.registerCommand("intake-balls", IntakeBalls(self.intake))
 
     def get_autonomous_command(self) -> Command:
         command_str = NetworkServer.getInstance().get_string("selected-auto")
