@@ -48,6 +48,9 @@ class Navx(Subsystem):
     def get_rate_deg(self) -> float:
         return self.navx.getRate()
 
+    def get_angualar_velocity(self) -> float:
+        return radians(self.navx.getRate())
+
     def periodic(self) -> None:
         if not self.zeroed and not self.is_calibrating() and self.is_connected():
             self.zero_yaw()

@@ -61,7 +61,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
-            PPHolonomicDriveController(PIDConstants(0.25, 0.0, 0.03), PIDConstants(0.03, 0.0, 0.01)),
+            PPHolonomicDriveController(PIDConstants(0.3984375, 0.0, 0.005), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
             config,
             self.should_flip_path,
             self,
@@ -97,6 +97,9 @@ class DriveTrainMecanum(Subsystem):
         NetworkServer.getInstance().set_float("front-right", self.right_front_drive.getAppliedOutput())
         NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
         NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
+
+        print(f"{self.navx.get_angualar_velocity()=}")
+        print(f"{speeds.omega=}")
 
         wheel_speeds = self.kinematics.toWheelSpeeds(speeds)
 

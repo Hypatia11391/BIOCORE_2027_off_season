@@ -47,8 +47,6 @@ class OperateTelop(Command):
             case operation_consts.IntakeLiftState.DOWN.value:
                 self.intake.set_lift_position(operation_consts.INTAKE_LIFT_POS_DOWN)
 
-        print(self.intake_feed_state)
-
         match self.intake_feed_state:
             case operation_consts.IntakeFeedState.OFF.value:
                 self.intake.set_feed_speed(0)
@@ -115,9 +113,6 @@ class OperateTelop(Command):
 
         lb_out = self.controller.getRawButtonPressed(Buttons.LB.value)
         rb_in = self.controller.getRawButtonPressed(Buttons.RB.value)
-
-        print(f"{lb_out=}")
-        print(f"{rb_in=}")
 
         if lb_out:
             if self.intake_feed_state != operation_consts.IntakeFeedState.OUT.value:

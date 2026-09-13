@@ -61,12 +61,9 @@ class Intake(Subsystem):
     def set_feed_speed(self, speed: float) -> None:
         self.feed_power = speed
 
-        print(f"Set intake to: {self.feed_power}")
-
         self.intake_feed.set_pow(self.feed_power)
 
     def stop(self) -> None:
-        print("Stoping intake")
         self.intake_lift.stop()
         self.intake_feed.stop()
 
@@ -74,8 +71,6 @@ class Intake(Subsystem):
     def periodic(self) -> None:
         NetworkServer.getInstance().set_float("intake-lift-pos", self.lift_encoder.getPosition() / ((48 * (50 / 18)) / 360))
         NetworkServer.getInstance().set_float("intake-feed-power", self.feed_power)
-
-        print(f"{self.feed_power=}")
 
     # def periodic(self) -> None:
     #     print(self.target_pos, self.target_pos - self.lift_encoder.getPosition(), self.intake_lift.getAppliedOutput())
