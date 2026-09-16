@@ -1,7 +1,7 @@
 from typing import override
 
 from commands2 import Command
-from wpilib import Joystick
+from wpilib import Joystick, RobotBase
 
 from src.constants import SPEED_SCALAR
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
@@ -35,7 +35,7 @@ class DriveTelop(Command):
             strafe_speed * SPEED_SCALAR,
             turn_speed * SPEED_SCALAR,
         )
-
+        
     @override
     def end(self, interrupted: bool) -> None:
         pass
@@ -43,3 +43,10 @@ class DriveTelop(Command):
     @override
     def isFinished(self) -> bool:
         return False
+
+    def get_controller_axis(self, axis):
+        if self.controller.getAxisCount()==0 and RobotBase.isSimulation():
+            return -1 if axis==1 else 0
+        else:
+            return self.controller.getRawAxis(axis)
+

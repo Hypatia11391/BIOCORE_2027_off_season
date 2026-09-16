@@ -127,3 +127,15 @@ class OperateTelop(Command):
 
             else:
                 self.intake_feed_state = operation_consts.IntakeFeedState.OFF.value
+
+    def get_controller_axis(self, axis):
+        if self.controller.getAxisCount()==0 and RobotBase.isSimulation():
+            return 0
+        else:
+            return self.controller.getRawAxis(axis)
+
+    def get_controller_button_pressed(self, button):
+        if self.controller.getButtonCount()==0 and RobotBase.isSimulation():
+            return False
+        else:
+            return self.controller.getRawButtonPressed(button)
