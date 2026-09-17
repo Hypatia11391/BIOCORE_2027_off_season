@@ -77,7 +77,7 @@ class DriveTrainMecanum(Subsystem):
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
-        # print(forward_speed, strafe_speed, turn_speed)
+        print(forward_speed, strafe_speed, turn_speed)
 
         # clamp = 0.25
 

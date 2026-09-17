@@ -1,7 +1,7 @@
 from typing import override
 
 from commands2 import Command
-from wpilib import Joystick, Timer
+from wpilib import Joystick, Timer, RobotBase
 
 import src.commands.operation_constants as operation_consts
 from src.buttons import Buttons
@@ -57,7 +57,7 @@ class OperateTelop(Command):
             case operation_consts.IntakeFeedState.OUT.value:
                 self.intake.set_feed_speed(-operation_consts.INTAKE_FEED_PWR)
 
-        rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
+        rt_shoot = self.get_controller_axis(JoystickAxes.RT.value)
 
         if abs(rt_shoot) > 0.08:
             left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
@@ -94,8 +94,8 @@ class OperateTelop(Command):
         return False
 
     def update_states(self) -> None:
-        a_down = self.controller.getRawButtonPressed(Buttons.A.value)
-        y_up = self.controller.getRawButtonPressed(Buttons.Y.value)
+        a_down = self.get_controller_button_pressed(Buttons.A.value)
+        y_up = self.get_controller_button_pressed(Buttons.Y.value)
 
         if a_down:
             if self.intake_lift_state != operation_consts.IntakeLiftState.DOWN.value:
@@ -111,8 +111,8 @@ class OperateTelop(Command):
             else:
                 self.intake_lift_state = operation_consts.IntakeLiftState.OFF.value
 
-        lb_out = self.controller.getRawButtonPressed(Buttons.LB.value)
-        rb_in = self.controller.getRawButtonPressed(Buttons.RB.value)
+        lb_out = self.get_controller_button_pressed(Buttons.LB.value)
+        rb_in = self.get_controller_button_pressed(Buttons.RB.value)
 
         if lb_out:
             if self.intake_feed_state != operation_consts.IntakeFeedState.OUT.value:
@@ -130,12 +130,14 @@ class OperateTelop(Command):
 
     def get_controller_axis(self, axis):
         if self.controller.getAxisCount()==0 and RobotBase.isSimulation():
+            print("no teleop controller axes, using default")
             return 0
         else:
             return self.controller.getRawAxis(axis)
 
     def get_controller_button_pressed(self, button):
         if self.controller.getButtonCount()==0 and RobotBase.isSimulation():
+            print("no teleop controller buttons, using default")
             return False
         else:
             return self.controller.getRawButtonPressed(button)
