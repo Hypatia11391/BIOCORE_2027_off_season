@@ -59,7 +59,7 @@ class RobotContainer:
 
     def get_autonomous_command(self) -> Command:
         return PathPlannerAuto("Drive Forward 1m")
-        
+
         command_str = NetworkServer.getInstance().get_string("selected-auto")
 
         print(command_str)
@@ -68,7 +68,7 @@ class RobotContainer:
             self.autonomous_command = PathPlannerAuto(command_str)
         else:
             self.autonomous_command = Command()
-        
+
         return self.autonomous_command
 
     def zero_pose(self) -> None:
