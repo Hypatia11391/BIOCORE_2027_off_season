@@ -77,7 +77,7 @@ class DriveTrainMecanum(Subsystem):
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
-        print(forward_speed, strafe_speed, turn_speed)
+        print('speeds:', forward_speed, strafe_speed, turn_speed)
 
         # clamp = 0.25
 
@@ -112,6 +112,10 @@ class DriveTrainMecanum(Subsystem):
 
     @override
     def periodic(self) -> None:
+        print(f'{self.get_wheel_speeds()=}')
+        print(f'{self.get_relative_speeds()=}')
+        print(self.pose_estimator.getEstimatedPosition().toPose2d())
+        
         if self.pose_estimator is not None:
             self.pose_estimator.update(
                 self.navx.get_full_rotation(),

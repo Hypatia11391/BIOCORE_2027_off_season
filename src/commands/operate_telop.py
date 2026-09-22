@@ -130,14 +130,14 @@ class OperateTelop(Command):
 
     def get_controller_axis(self, axis):
         if self.controller.getAxisCount()==0 and RobotBase.isSimulation():
-            print("no teleop controller axes, using default")
+            #print("no teleop controller axes, using default")
             return 0
         else:
             return self.controller.getRawAxis(axis)
 
     def get_controller_button_pressed(self, button):
         if self.controller.getButtonCount()==0 and RobotBase.isSimulation():
-            print("no teleop controller buttons, using default")
+            #print("no teleop controller buttons, using default")
             return False
         else:
             return self.controller.getRawButtonPressed(button)
