@@ -31,8 +31,6 @@ class FireCommand(Command):
 
         self.addRequirements(feed, kicker, shooter, drive)
 
-        self.time_at_target_speed = -1.0
-
     class CaculationResult(NamedTuple):
         rpm: float
         is_possible: bool
@@ -50,6 +48,7 @@ class FireCommand(Command):
             return FireCommand.CaculationResult(rpm=rpm, is_possible=False)
 
         entry_angle = math.atan2(math.sin(LAUNCHER_ANGLE) * v - GRAVITY * t, relative_target.toTranslation2d().norm() / t)
+
         if entry_angle > -math.pi / 4:
             return FireCommand.CaculationResult(rpm=rpm, is_possible=False)
 
@@ -58,11 +57,15 @@ class FireCommand(Command):
     @override
     def initialize(self):
         self.relative_target = self.target - self.pose_estimator.getEstimatedPosition().translation()
+
         self.calculation_result = self.calculate_rpm(self.relative_target)
+
         if self.calculation_result.is_possible:
             self.finished = False
         else:
             self.finished = True
+
+        self.time_at_target_speed = -1.0
 
     @override
     def execute(self):
@@ -70,13 +73,14 @@ class FireCommand(Command):
 
         self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
 
-        if self.shooter.is_at_target_rpm() or self.time_at_target_speed > 0.0:  # TODO: fix shooter decelerating during firing
+        if self.shooter.is_at_target_rpm() or self.time_at_target_speed > 0.0:
             self.kicker.set_kicker_speed(operate_consts.KICKER_POWER)
             self.feed.set_feed_speed(operate_consts.FEED_POWER)
 
             if self.time_at_target_speed < 0.0:
                 self.time_at_target_speed = Timer.getFPGATimestamp()
-            if Timer.getFPGATimestamp() - self.time_at_target_speed > FIRE_DURATION:
+
+            elif Timer.getFPGATimestamp() - self.time_at_target_speed > FIRE_DURATION:
                 self.finished = True
 
         else:
