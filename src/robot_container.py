@@ -52,7 +52,7 @@ class RobotContainer:
         self.controller_operate = Joystick(1)
 
         self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
-        self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
+        self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate, self.get_shoot_sequence()))
 
         NetworkServer.getInstance().set_string_list("auto-list", ["Drive Forward 1m", "Turn 90 Clockwise"])
 

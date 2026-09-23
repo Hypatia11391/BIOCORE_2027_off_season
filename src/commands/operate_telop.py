@@ -1,6 +1,6 @@
 from typing import override
 
-from commands2 import Command
+from commands2 import Command, CommandScheduler
 from wpilib import Joystick, Timer
 
 import src.commands.operation_constants as operation_consts
@@ -13,7 +13,15 @@ from src.subsystems.mechanisms.shooter import Shooter
 
 
 class OperateTelop(Command):
-    def __init__(self, intake: Intake, feed: Feed, kicker: Kicker, shooter: Shooter, controller: Joystick) -> None:
+    def __init__(
+        self,
+        intake: Intake,
+        feed: Feed,
+        kicker: Kicker,
+        shooter: Shooter,
+        controller: Joystick,
+        auto_shoot_command: Command,
+    ) -> None:
         super().__init__()
 
         self.intake = intake
@@ -21,6 +29,8 @@ class OperateTelop(Command):
         self.kicker = kicker
         self.shooter = shooter
         self.controller = controller
+
+        self.auto_shoot_command = auto_shoot_command
 
         self.addRequirements(intake, feed, kicker, shooter)
 
@@ -58,6 +68,7 @@ class OperateTelop(Command):
                 self.intake.set_feed_speed(-operation_consts.INTAKE_FEED_PWR)
 
         rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
+        lb_shoot_auto = self.controller.getRawButton(Buttons.LB.value)
 
         if abs(rt_shoot) > 0.08:
             left_shooter_speed = 2145  # rt_shoot * operation_consts.HIGH_LEFT_RPM
@@ -81,6 +92,9 @@ class OperateTelop(Command):
             self.feed.stop()
             self.kicker.stop()
             self.shooter.stop()
+
+        if lb_shoot_auto:
+            CommandScheduler.getInstance().schedule(self.auto_shoot_command)
 
     @override
     def end(self, interrupted: bool) -> None:
