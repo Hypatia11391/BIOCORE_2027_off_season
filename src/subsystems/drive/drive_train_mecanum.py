@@ -78,8 +78,8 @@ class DriveTrainMecanum(Subsystem):
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
 
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
-            kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * 60),
-            kA = 0.0007,
+            kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),  # ratio of volts to speed in rad/s
+            kA = 0.01,
         )
                 
         self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
@@ -156,21 +156,21 @@ class DriveTrainMecanum(Subsystem):
         self.rl_system_sim.update(tm_diff)
         self.rr_system_sim.update(tm_diff)
 
-        fl_rpm = self.fl_system_sim.getOutput(0)
-        fr_rpm = self.fr_system_sim.getOutput(0)
-        rl_rpm = self.rl_system_sim.getOutput(0)
-        rr_rpm = self.rr_system_sim.getOutput(0)
+        fl_out = self.fl_system_sim.getOutput(0)
+        fr_out = self.fr_system_sim.getOutput(0)
+        rl_out = self.rl_system_sim.getOutput(0)
+        rr_out = self.rr_system_sim.getOutput(0)
         
         # Update encoders
         # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
-        mps_to_rpm = WHEEL_GEAR_RATIO / WHEEL_CIRCUMFERENCE * 60
+        radps_to_rpm = 60 / (2*pi)
+        conversion_factor = radps_to_rpm * self.left_front_drive.configAccessor.encoder.getVelocityConversionFactor()
         voltage = wpilib.RobotController.getBatteryVoltage()
-        conversion_factor = self.left_front_drive.configAccessor.encoder.getVelocityConversionFactor()
         
-        self.fl_motor_sim.iterate(fl_rpm * conversion_factor, self.battery_voltage, tm_diff)
-        self.fr_motor_sim.iterate(fr_rpm * conversion_factor, self.battery_voltage, tm_diff)
-        self.rl_motor_sim.iterate(rl_rpm * conversion_factor, self.battery_voltage, tm_diff)
-        self.rr_motor_sim.iterate(rr_rpm * conversion_factor, self.battery_voltage, tm_diff)
+        self.fl_motor_sim.iterate(fl_out * conversion_factor, self.battery_voltage, tm_diff)
+        self.fr_motor_sim.iterate(fr_out * conversion_factor, self.battery_voltage, tm_diff)
+        self.rl_motor_sim.iterate(rl_out * conversion_factor, self.battery_voltage, tm_diff)
+        self.rr_motor_sim.iterate(rr_out * conversion_factor, self.battery_voltage, tm_diff)
         
         # Update simulated navx gyro heading
         # We convert from rad/s to deg/frame
