@@ -56,9 +56,8 @@ class FireCommand(Command):
 
     @override
     def initialize(self):
-        self.relative_target = self.target - self.pose_estimator.getEstimatedPosition().translation()
-
-        self.calculation_result = self.calculate_rpm(self.relative_target)
+        relative_target = self.target - self.pose_estimator.getEstimatedPosition().translation()
+        self.calculation_result = self.calculate_rpm(relative_target)
 
         if self.calculation_result.is_possible:
             self.finished = False
