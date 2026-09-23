@@ -37,8 +37,6 @@ class OperateTelop(Command):
         self.intake_lift_state = operation_consts.IntakeLiftState.OFF.value
         self.intake_feed_state = operation_consts.IntakeFeedState.OFF.value
 
-        self.time_at_target_speed = -1.0
-
     @override
     def initialize(self) -> None:
         self.intake.stop()
@@ -80,13 +78,9 @@ class OperateTelop(Command):
                 self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
                 self.feed.set_feed_speed(operation_consts.FEED_POWER)
 
-                if self.time_at_target_speed < 0.0:
-                    self.time_at_target_speed = Timer.getFPGATimestamp()
-
             else:
                 self.feed.stop()
                 self.kicker.stop()
-                # self.shooter.stop()
 
         else:
             self.feed.stop()
