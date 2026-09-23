@@ -1,69 +1,85 @@
 from math import pi
 
 import wpilib
-from wpilib.simulation import SimDeviceSim, AnalogGyroSim
+from wpilib.simulation import SimDeviceSim, LinearSystemSim_1_1_1
 from pyfrc.physics.core import PhysicsInterface
-from pyfrc.physics import drivetrains
 from wpimath.kinematics import MecanumDriveWheelSpeeds
-from rev import SparkMaxSim, SparkLowLevel
-from wpimath.system.plant import DCMotor
+from rev import SparkMaxSim
+from wpimath.system.plant import DCMotor, LinearSystemId
 
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_RIGHT_ID, REAR_LEFT_ID, REAR_RIGHT_ID, MAX_ANGULAR_SPEED, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, MAX_SPEED
+from src.subsystems.drive.drive_train_constants import WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, MAX_SPEED
+
+
+kA = 0.0007
 
 
 class PhysicsEngine: 
     def __init__(self, physics_controller: PhysicsInterface, robot: "Robot"):
         self.physics_controller = physics_controller
         self.drive = robot.robot_container.drive
+        self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
+        print(self.battery_voltage)
+
+        wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
+            kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * 60),
+            kA = kA,
+        )
+
+        print(self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * 60))
         
-        self.front_left_sim = SparkMaxSim(self.drive.left_front_drive, DCMotor.NEO(1))
-        self.front_right_sim = SparkMaxSim(self.drive.right_front_drive, DCMotor.NEO(1))
-        self.rear_left_sim = SparkMaxSim(self.drive.left_rear_drive, DCMotor.NEO(1))
-        self.rear_right_sim = SparkMaxSim(self.drive.right_rear_drive, DCMotor.NEO(1))
+        self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        self.fr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        self.rl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        self.rr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        
+        self.fl_motor_sim = SparkMaxSim(self.drive.left_front_drive, DCMotor.NEO(1))
+        self.fr_motor_sim = SparkMaxSim(self.drive.right_front_drive, DCMotor.NEO(1))
+        self.rl_motor_sim = SparkMaxSim(self.drive.left_rear_drive, DCMotor.NEO(1))
+        self.rr_motor_sim = SparkMaxSim(self.drive.right_rear_drive, DCMotor.NEO(1))
         
         self.navx_sim = SimDeviceSim("navX-Sensor[4]")
         self.navx_yaw = self.navx_sim.getDouble("Yaw")
     
     def update_sim(self, now: float, tm_diff: float):
-        fl = self.drive.left_front_drive.get()
-        fr = self.drive.right_front_drive.get()
-        rl = self.drive.left_rear_drive.get()
-        rr = self.drive.right_rear_drive.get()
-        print(f'{fl=}, {fr=}, {rl=}, {rr=}')
+
+        # Update wheel linear system
+        self.fl_system_sim.setInput(0, self.drive.left_front_drive.get() * self.battery_voltage)
+        self.fr_system_sim.setInput(0, self.drive.right_front_drive.get() * self.battery_voltage)
+        self.rl_system_sim.setInput(0, self.drive.left_rear_drive.get() * self.battery_voltage)
+        self.rr_system_sim.setInput(0, self.drive.right_rear_drive.get() * self.battery_voltage)
+
+        self.fl_system_sim.update(tm_diff)
+        self.fr_system_sim.update(tm_diff)
+        self.rl_system_sim.update(tm_diff)
+        self.rr_system_sim.update(tm_diff)
+
+        fl_rpm = self.fl_system_sim.getOutput(0)
+        fr_rpm = self.fr_system_sim.getOutput(0)
+        rl_rpm = self.rl_system_sim.getOutput(0)
+        rr_rpm = self.rr_system_sim.getOutput(0)
         
-        # Get wheel speeds in radians per second
-        fl_mps = self.drive.left_front_drive.get() * MAX_SPEED
-        fr_mps = self.drive.right_front_drive.get() * MAX_SPEED
-        rl_mps = self.drive.left_rear_drive.get() * MAX_SPEED
-        rr_mps = self.drive.right_rear_drive.get() * MAX_SPEED
-        print(f'{fl_mps=}, {fr_mps=}, {rl_mps=}, {rr_mps=}')
-        for motor in (self.drive.left_front_drive, self.drive.right_front_drive, self.drive.left_rear_drive, self.drive.right_rear_drive): assert abs(motor.configAccessor.encoder.getPositionConversionFactor() / 60 - motor.configAccessor.encoder.getVelocityConversionFactor()) < 1e-9  # close enough for floating point errors
-        
-        # Iterate encoders
+        # Update encoders
         # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
-        # 1. Calculate constants
         mps_to_rpm = WHEEL_GEAR_RATIO / WHEEL_CIRCUMFERENCE * 60
         voltage = wpilib.RobotController.getBatteryVoltage()
-
-        # 2. Check that position and velocity conversion factors match
-        # they must be close enough for floating point errors
-        for motor in (self.drive.left_front_drive, self.drive.right_front_drive, self.drive.left_rear_drive, self.drive.right_rear_drive): assert abs(motor.configAccessor.encoder.getPositionConversionFactor() / 60 - motor.configAccessor.encoder.getVelocityConversionFactor()) < 1e-9, "Position and velocity conversion factors must have a ratio of 60"
-
-        # 3. Actually call iterate four times
-        self.front_left_sim.iterate(fl_mps * mps_to_rpm * self.drive.left_front_drive.configAccessor.encoder.getVelocityConversionFactor(), voltage, tm_diff)
-        self.front_right_sim.iterate(fr_mps * mps_to_rpm * self.drive.right_front_drive.configAccessor.encoder.getVelocityConversionFactor(), voltage, tm_diff)
-        self.rear_left_sim.iterate(rl_mps * mps_to_rpm * self.drive.left_rear_drive.configAccessor.encoder.getVelocityConversionFactor(), voltage, tm_diff)
-        self.rear_right_sim.iterate(rr_mps * mps_to_rpm * self.drive.right_rear_drive.configAccessor.encoder.getVelocityConversionFactor(), voltage, tm_diff)
-        print(f'{fl_mps*mps_to_rpm=}')
+        conversion_factor = self.drive.left_front_drive.configAccessor.encoder.getVelocityConversionFactor()
         
-        # Compute wheel speeds (m/s), chassis speeds and drive simulation
-        wheel_speeds = MecanumDriveWheelSpeeds(fl_mps, fr_mps, rl_mps, rr_mps)
-        #print(f'physics.py, {wheel_speeds=}')
+        self.fl_motor_sim.iterate(fl_rpm * conversion_factor, self.battery_voltage, tm_diff)
+        self.fr_motor_sim.iterate(fr_rpm * conversion_factor, self.battery_voltage, tm_diff)
+        self.rl_motor_sim.iterate(rl_rpm * conversion_factor, self.battery_voltage, tm_diff)
+        self.rr_motor_sim.iterate(rr_rpm * conversion_factor, self.battery_voltage, tm_diff)
+        
+        # Update physics_controller
+        wheel_speeds = MecanumDriveWheelSpeeds(
+            fl_rpm * conversion_factor,
+            fr_rpm * conversion_factor,
+            rl_rpm * conversion_factor,
+            rr_rpm * conversion_factor,
+        )
         chassis_speeds = self.drive.kinematics.toChassisSpeeds(wheel_speeds)
-        #print(f'{chassis_speeds=}')
         self.physics_controller.drive(chassis_speeds, tm_diff)
         
-        # Advance simulated gyro heading
+        # Update simulated navx gyro heading
         # We convert from rad/s to deg/frame
         # wpilib is CCW positive, navx is CW positive, so we subtract
         self.navx_yaw.set(self.navx_yaw.get() - chassis_speeds.omega*tm_diff*(180/pi))
