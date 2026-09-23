@@ -1,7 +1,7 @@
 from typing import override
 
 from commands2 import Command, CommandScheduler
-from wpilib import Joystick, Timer
+from wpilib import Joystick
 
 import src.commands.operation_constants as operation_consts
 from src.buttons import Buttons
