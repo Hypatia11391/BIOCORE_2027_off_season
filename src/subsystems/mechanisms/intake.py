@@ -1,7 +1,11 @@
 from typing import override
+from math import pi
 
+import wpilib
 from commands2 import Subsystem
-from rev import SparkLowLevel, SparkMaxConfig
+from rev import SparkLowLevel, SparkMaxConfig, SparkMaxSim
+from wpimath.system.plant import LinearSystemId, DCMotor
+from wpilib.simulation import LinearSystemSim_1_1_1
 
 import src.subsystems.mechanisms.intake_constants as intake_consts
 from src.network_server.network_server import NetworkServer
@@ -45,6 +49,21 @@ class Intake(Subsystem):
 
         self.feed_power = 0
 
+        if wpilib.RobotBase.isSimulation():
+            self._init_simulation()
+
+    def _init_simulation(self):
+        self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
+        
+        intake_feed_plant = LinearSystemId.identifyVelocitySystemRadians(
+            kV = self.battery_voltage / (intake_consts.INTAKE_FEED_MAX_SPEED * (2*pi)/60),
+            kA = 0.01,
+        )
+        self.intake_feed_system_sim = LinearSystemSim_1_1_1(intake_feed_plant)
+        self.intake_feed_motor_sim = SparkMaxSim(self.intake_feed.motor, DCMotor.NEO(1))
+        
+        self.last_sim_time = wpilib.Timer.getFPGATimestamp()
+
     # In degrees
     def set_lift_position(self, target_pos: float) -> None:
         # self.target_pos = max(intake_consts.INTAKE_LIFT_UP_POS, min(target_pos, intake_consts.INTAKE_LIFT_DOWN_POS))  # Clamp TODO: once have more accurate method of position detection add back
@@ -70,6 +89,20 @@ class Intake(Subsystem):
     def periodic(self) -> None:
         NetworkServer.getInstance().set_float("intake-lift-pos", self.lift_encoder.getPosition() / ((48 * (50 / 18)) / 360))
         NetworkServer.getInstance().set_float("intake-feed-power", self.feed_power)
+
+    @override
+    def simulationPeriodic(self):
+        current_time = wpilib.Timer.getFPGATimestamp()
+        tm_diff = current_time - self.last_sim_time
+        self.last_sim_time = current_time
+        
+        self.intake_feed_system_sim.setInput(0, self.intake_feed.motor.get() * self.battery_voltage)
+        self.intake_feed_system_sim.update(tm_diff)
+        out = self.intake_feed_system_sim.getOutput(0)
+
+        radps_to_rpm = 60 / (2*pi)
+        conversion_factor = radps_to_rpm * self.intake_feed.motor.configAccessor.encoder.getVelocityConversionFactor()
+        self.intake_feed_motor_sim.iterate(out * conversion_factor, self.battery_voltage, tm_diff)
 
     # def periodic(self) -> None:
     #     print(self.target_pos, self.target_pos - self.lift_encoder.getPosition(), self.intake_lift.getAppliedOutput())
