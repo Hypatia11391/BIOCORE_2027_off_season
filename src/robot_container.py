@@ -1,17 +1,20 @@
-from commands2 import Command
+from commands2 import Command, cmd, DeferredCommand
 from pathplannerlib.auto import NamedCommands, PathPlannerAuto
 from pathplannerlib.logging import PathPlannerLogging
 from wpilib import DriverStation, Field2d, Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.geometry import Rotation2d
+from wpimath.geometry import Rotation2d, Translation3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
+from wpimath.controller import PIDController
 
 import src.constants as consts
 import src.subsystems.drive.drive_train_constants as drive_consts
 from src.commands.drive_telop import DriveTelop
 from src.commands.intake_balls import IntakeBalls
 from src.commands.operate_telop import OperateTelop
-from src.commands.shoot import ShootCommand
+from commands.turn_to import TurnToCommand
+from commands.stop import StopCommand
+from commands.fire import FireCommand
 from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
@@ -55,11 +58,10 @@ class RobotContainer:
 
         self.field = Field2d()
 
-        self.autonomous_command = Command()
+        self.autonomous_command = cmd.none()
 
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
 
-        NamedCommands.registerCommand("shoot", ShootCommand(self.feed, self.kicker, self.shooter, self.pose_estimator))
         NamedCommands.registerCommand("intake-balls", IntakeBalls(self.intake))
 
     def get_autonomous_command(self) -> Command:
@@ -70,8 +72,35 @@ class RobotContainer:
         if command_str != "":
             self.autonomous_command = PathPlannerAuto(command_str)
         else:
-            self.autonomous_command = Command()
+            self.autonomous_command = cmd.none()
         return self.autonomous_command
+
+    def shot_possible(self, relative_target) -> bool:
+        return FireCommand.calculate_rpm(relative_target).is_possible
+
+    def get_relative_target(self, target) -> Translation3d:
+        return target - self.pose_estimator.getEstimatedPosition().translation()
+
+    def get_shoot_sequence(self) -> Command:
+        target = Translation3d(10, 5, 2)
+        shoot_sequence = cmd.either(
+            cmd.sequence(
+                StopCommand(self.feed, self.kicker, self.shooter, self.drive, self.intake),
+                DeferredCommand(
+                    lambda: TurnToCommand(
+                        self.get_relative_target(target).toTranslation2d().angle().degrees(),
+                        self.drive,
+                        self.pose_estimator,
+                        PIDController(1, 0, 0),  # TODO: Tune
+                    )
+                ),
+                FireCommand(target, self.feed, self.kicker, self.shooter, self.drive, self.pose_estimator),
+            ),
+            cmd.none(),
+            lambda: self.shot_possible(self.get_relative_target(target)),
+        )
+
+        return shoot_sequence
 
     def zero_pose(self) -> None:
         self.pose_estimator.resetPose(consts.STARTING_POSE)

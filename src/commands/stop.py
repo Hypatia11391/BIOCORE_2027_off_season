@@ -8,7 +8,7 @@ from src.subsystems.mechanisms.intake import Intake
 from src.subsystems.mechanisms.kicker import Kicker
 from src.subsystems.mechanisms.shooter import Shooter
 
-SPEED_THRESHOLD = 1
+SPEED_THRESHOLD = 0.05  # TODO: Tune
 
 
 class StopCommand(Command):
@@ -45,7 +45,7 @@ class StopCommand(Command):
 
     @override
     def isFinished(self) -> bool:
-        wheel_speeds = self.drive.get_wheel_positions()
+        wheel_speeds = self.drive.get_wheel_speeds()
 
         return all(
             [
