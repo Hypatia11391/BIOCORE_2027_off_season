@@ -82,7 +82,7 @@ class RobotContainer:
         return target - self.pose_estimator.getEstimatedPosition().translation()
 
     def get_shoot_sequence(self) -> Command:
-        target = Translation3d(10, 5, 2)
+        target = Translation3d(5, 2, 1)
         shoot_sequence = cmd.either(
             cmd.sequence(
                 StopCommand(self.feed, self.kicker, self.shooter, self.drive, self.intake),
