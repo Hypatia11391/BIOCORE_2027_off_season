@@ -79,7 +79,7 @@ class DriveTrainMecanum(Subsystem):
 
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
             kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),  # ratio of volts to speed in rad/s
-            kA = 0.01,
+            kA = 0.007,
         )
                 
         self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
