@@ -16,7 +16,8 @@ from wpimath.system.plant import DCMotor, LinearSystemId
 from wpilib.simulation import SimDeviceSim, LinearSystemSim_1_1_1
 
 from src.navx.navx import Navx
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ANGULAR_SPEED, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
+from src.network_server.network_server import NetworkServer
+from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
 
 class DriveTrainMecanum(Subsystem):
@@ -28,10 +29,10 @@ class DriveTrainMecanum(Subsystem):
         self.left_rear_drive = rev.SparkMax(REAR_LEFT_ID, rev.SparkLowLevel.MotorType.kBrushless)
         self.right_rear_drive = rev.SparkMax(REAR_RIGHT_ID, rev.SparkLowLevel.MotorType.kBrushless)
         
-        self.config_drive_motor(self.left_front_drive, False)
-        self.config_drive_motor(self.right_front_drive, True)
-        self.config_drive_motor(self.left_rear_drive, False)
-        self.config_drive_motor(self.right_rear_drive, True)
+        self.config_drive_motor(self.left_front_drive, True)
+        self.config_drive_motor(self.right_front_drive, False)
+        self.config_drive_motor(self.left_rear_drive, True)
+        self.config_drive_motor(self.right_rear_drive, False)
 
         self.left_front_encoder = self.left_front_drive.getEncoder()
         self.right_front_encoder = self.right_front_drive.getEncoder()
@@ -62,7 +63,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
-            PPHolonomicDriveController(PIDConstants(0.25, 0.0, 0.03), PIDConstants(0.25, 0.0, 0.01)),
+            PPHolonomicDriveController(PIDConstants(0.3984375, 0.0, 0.005), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
             config,
             self.should_flip_path,
             self,
@@ -115,17 +116,38 @@ class DriveTrainMecanum(Subsystem):
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
 
     def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
-        forward_speed = speeds.vx
-        strafe_speed = speeds.vy
-        turn_speed = speeds.omega
+        # forward_speed = speeds.vx
+        # strafe_speed = speeds.vy
+        # turn_speed = speeds.omega
 
-        forward_speed_percent = forward_speed / MAX_SPEED
-        strafe_speed_percent = strafe_speed / MAX_SPEED
-        print(turn_speed)
-        turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
-        
-        self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
-    
+        # forward_speed_percent = forward_speed / MAX_SPEED
+        # strafe_speed_percent = strafe_speed / MAX_SPEED
+        # turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
+
+        # self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
+
+        NetworkServer.getInstance().set_float("front-left", self.left_front_drive.getAppliedOutput())
+        NetworkServer.getInstance().set_float("front-right", self.right_front_drive.getAppliedOutput())
+        NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
+        NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
+
+        print(f"{self.navx.get_angualar_velocity()=}")
+        print(f"{speeds.omega=}")
+
+        wheel_speeds = self.kinematics.toWheelSpeeds(speeds)
+
+        wheel_speeds.desaturate(MAX_SPEED)
+
+        front_left_percent = wheel_speeds.frontLeft / MAX_SPEED
+        front_right_percent = wheel_speeds.frontRight / MAX_SPEED
+        rear_left_percent = wheel_speeds.rearLeft / MAX_SPEED
+        rear_right_percent = wheel_speeds.rearRight / MAX_SPEED
+
+        self.left_front_drive.set(front_left_percent)
+        self.right_front_drive.set(front_right_percent)
+        self.left_rear_drive.set(rear_left_percent)
+        self.right_rear_drive.set(rear_right_percent)
+
     @override
     def periodic(self) -> None:
         print(f'{self.get_wheel_speeds()=}')
@@ -138,6 +160,11 @@ class DriveTrainMecanum(Subsystem):
                 self.get_wheel_positions(),
             )
             self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
+
+        if DriverStation.isAutonomous():
+            self.robot_drive.setSafetyEnabled(False)
+        else:
+            self.robot_drive.setSafetyEnabled(True)
     
     @override
     def simulationPeriodic(self):

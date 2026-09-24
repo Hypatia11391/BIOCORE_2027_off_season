@@ -49,7 +49,7 @@ class RobotContainer:
         self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
 
-        NetworkServer.getInstance().set_string_list("auto-list", ["Drive Back and Forth 5m"])
+        NetworkServer.getInstance().set_string_list("auto-list", ["Drive Forward 1m", "Turn 90 Clockwise"])
 
         self.field = Field2d()
 

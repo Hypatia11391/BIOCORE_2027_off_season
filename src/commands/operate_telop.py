@@ -60,8 +60,8 @@ class OperateTelop(Command):
         rt_shoot = self.get_controller_axis(JoystickAxes.RT.value)
 
         if abs(rt_shoot) > 0.08:
-            left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
-            right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
+            left_shooter_speed = 2145  # rt_shoot * operation_consts.HIGH_LEFT_RPM
+            right_shooter_speed = left_shooter_speed  # rt_shoot * operation_consts.HIGH_RIGHT_RPM
 
             self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
 

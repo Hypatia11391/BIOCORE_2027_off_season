@@ -79,7 +79,8 @@ class Intake(Subsystem):
     # Speed between -1, 1
     def set_feed_speed(self, speed: float) -> None:
         self.feed_power = speed
-        self.intake_feed.set_target_pos(speed, SparkLowLevel.ControlType.kVelocity)
+
+        self.intake_feed.set_pow(self.feed_power)
 
     def stop(self) -> None:
         self.intake_lift.stop()
