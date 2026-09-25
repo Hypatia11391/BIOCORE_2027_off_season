@@ -1,10 +1,14 @@
-from commands2 import Command
-from pathplannerlib.auto import NamedCommands, PathPlannerAuto
+import math
+
+from commands2 import Command, cmd, DeferredCommand
+from pathplannerlib.auto import NamedCommands, PathPlannerAuto, AutoBuilder
 from pathplannerlib.logging import PathPlannerLogging
+from pathplannerlib.path import PathConstraints
 from wpilib import DriverStation, Field2d, Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.geometry import Rotation2d
+from wpimath.geometry import Rotation2d, Translation3d, Pose2d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
+from wpimath.controller import PIDController
 
 import src.constants as consts
 import src.subsystems.drive.drive_train_constants as drive_consts
@@ -12,6 +16,8 @@ from src.commands.drive_telop import DriveTelop
 from src.commands.intake_balls import IntakeBalls
 from src.commands.operate_telop import OperateTelop
 from src.commands.shoot import ShootCommand
+from src.commands.stop import StopCommand
+from src.commands.turn_to import TurnToCommand
 from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
@@ -72,6 +78,47 @@ class RobotContainer:
         else:
             self.autonomous_command = Command()
         return self.autonomous_command
+
+    def get_drive_to_pos_command(self, target_pos: Pose2d) -> Command:
+        constraints = PathConstraints(
+            maxVelocityMps=2,
+            maxAccelerationMpsSq=1,
+            maxAngularVelocityRps=2 * math.pi,
+            maxAngularAccelerationRpsSq=math.pi,
+            nominalVoltage=12,
+        )
+
+        drive_to_pos_command = AutoBuilder.pathfindToPose(
+            target_pos,
+            constraints,
+            goal_end_vel=0,
+        )
+
+        return drive_to_pos_command
+
+    def get_nearest_ball_pos(self) -> Translation3d:
+        ball_pos = Translation3d(3, 2, 0)  # TODO: add networking and NN on the pi
+        return ball_pos
+
+    def get_ball_chassing_command(self) -> Command:  # Command Structure: stop -> get ball pos -> turn -> lift down + run intake -> drive -> lift up + stop intake
+        ball_pos = self.get_nearest_ball_pos()
+        ball_chassing_command = cmd.sequence(
+            StopCommand(self.feed, self.kicker, self.shooter, self.drive, self.intake),
+            DeferredCommand(
+                lambda: TurnToCommand(
+                    (ball_pos - self.pose_estimator.getEstimatedPosition().translation()).toTranslation2d().angle().rotateBy(Rotation2d(math.pi)).degrees(),
+                    self.drive,
+                    self.pose_estimator,
+                    PIDController(1, 0, 0),  # TODO: Tune
+                )
+            ),
+            cmd.race(
+                IntakeBalls(self.intake),
+                self.get_drive_to_pos_command(Pose2d(ball_pos.toTranslation2d(), ball_pos.toTranslation2d().angle().rotateBy(Rotation2d(math.pi)))),
+            ),
+        )
+
+        return ball_chassing_command
 
     def zero_pose(self) -> None:
         self.pose_estimator.resetPose(consts.STARTING_POSE)
