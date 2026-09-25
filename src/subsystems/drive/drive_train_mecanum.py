@@ -126,10 +126,10 @@ class DriveTrainMecanum(Subsystem):
 
         # self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
 
-        NetworkServer.getInstance().set_float("front-left", self.left_front_drive.getAppliedOutput())
-        NetworkServer.getInstance().set_float("front-right", self.right_front_drive.getAppliedOutput())
-        NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
-        NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
+        # NetworkServer.getInstance().set_float("front-left", self.left_front_drive.getAppliedOutput())
+        # NetworkServer.getInstance().set_float("front-right", self.right_front_drive.getAppliedOutput())
+        # NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
+        # NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
 
         print(f"{self.navx.get_angualar_velocity()=}")
         print(f"{speeds.omega=}")
@@ -143,10 +143,11 @@ class DriveTrainMecanum(Subsystem):
         rear_left_percent = wheel_speeds.rearLeft / MAX_SPEED
         rear_right_percent = wheel_speeds.rearRight / MAX_SPEED
 
-        self.left_front_drive.set(front_left_percent)
-        self.right_front_drive.set(front_right_percent)
-        self.left_rear_drive.set(rear_left_percent)
-        self.right_rear_drive.set(rear_right_percent)
+        bad_negation = -1 if wpilib.RobotBase.isSimulation() else 1
+        self.left_front_drive.set(front_left_percent*bad_negation)
+        self.right_front_drive.set(front_right_percent*bad_negation)
+        self.left_rear_drive.set(rear_left_percent*bad_negation)
+        self.right_rear_drive.set(rear_right_percent*bad_negation)
 
     @override
     def periodic(self) -> None:
@@ -171,12 +172,14 @@ class DriveTrainMecanum(Subsystem):
         current_time = wpilib.Timer.getFPGATimestamp()
         tm_diff = current_time - self.last_sim_time
         self.last_sim_time = current_time
+        print(f'{self.left_front_drive.get()=}')
 
         # Update wheel linear system
-        self.fl_system_sim.setInput(0, self.left_front_drive.get() * self.battery_voltage)
-        self.fr_system_sim.setInput(0, self.right_front_drive.get() * self.battery_voltage)
-        self.rl_system_sim.setInput(0, self.left_rear_drive.get() * self.battery_voltage)
-        self.rr_system_sim.setInput(0, self.right_rear_drive.get() * self.battery_voltage)
+        # output must be inverted because yeah
+        self.fl_system_sim.setInput(0, -self.left_front_drive.get() * self.battery_voltage)
+        self.fr_system_sim.setInput(0, -self.right_front_drive.get() * self.battery_voltage)
+        self.rl_system_sim.setInput(0, -self.left_rear_drive.get() * self.battery_voltage)
+        self.rr_system_sim.setInput(0, -self.right_rear_drive.get() * self.battery_voltage)
 
         self.fl_system_sim.update(tm_diff)
         self.fr_system_sim.update(tm_diff)
