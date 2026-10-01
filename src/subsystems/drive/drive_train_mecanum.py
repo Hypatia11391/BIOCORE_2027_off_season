@@ -17,7 +17,7 @@ from wpilib.simulation import SimDeviceSim, LinearSystemSim_1_1_1
 
 from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
+from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, MAX_ACCELERATION
 
 
 class DriveTrainMecanum(Subsystem):
@@ -80,9 +80,9 @@ class DriveTrainMecanum(Subsystem):
 
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
             kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),  # ratio of volts to speed in rad/s
-            kA = 0.007,
+            kA = self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
         )
-                
+        
         self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
         self.fr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
         self.rl_system_sim = LinearSystemSim_1_1_1(wheel_plant)

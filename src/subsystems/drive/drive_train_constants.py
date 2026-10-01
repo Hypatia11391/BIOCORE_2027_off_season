@@ -5,6 +5,7 @@ from wpimath.geometry import Translation2d
 
 # tune this to cap max output for testing
 MAX_SPEED: Final[float] = 5.2  # 4.845
+MAX_ACCELERATION: Final[float] = 5.9
 
 # CAN IDs (spark max)
 FRONT_LEFT_ID: Final[int] = 9
@@ -56,5 +57,3 @@ REAR_LEFT_LOCATION: Final[Translation2d] = Translation2d(-0.18415, 0.3175)
 REAR_RIGHT_LOCATION: Final[Translation2d] = Translation2d(-0.18415, -0.3175)
 
 MAX_VELOCITY: Final[float] = 0
-MAX_ANGULAR_ACCELERATION: Final[float] = 0
-MAX_ANGULAR_VELOCITY: Final[float] = 0
