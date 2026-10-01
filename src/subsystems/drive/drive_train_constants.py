@@ -50,10 +50,10 @@ DRIVE_ENCODER_CHANNEL_B_REAR_RIGHT: Final[int] = 0
 TURNING_ENCODER_CHANNEL_A_REAR_RIGHT: Final[int] = 0
 TURNING_ENCODER_CHANNEL_B_REAR_RIGHT: Final[int] = 0
 
-FRONT_LEFT_LOCATION: Final[Translation2d] = Translation2d(0.18415, 0.3175)
-FRONT_RIGHT_LOCATION: Final[Translation2d] = Translation2d(0.18415, -0.3175)
-REAR_LEFT_LOCATION: Final[Translation2d] = Translation2d(-0.18415, 0.3175)
-REAR_RIGHT_LOCATION: Final[Translation2d] = Translation2d(-0.18415, -0.3175)
+FRONT_LEFT_LOCATION: Translation2d = Translation2d(0.18415, 0.3175)
+FRONT_RIGHT_LOCATION: Translation2d = Translation2d(0.18415, -0.3175)
+REAR_LEFT_LOCATION: Translation2d = Translation2d(-0.18415, 0.3175)
+REAR_RIGHT_LOCATION: Translation2d = Translation2d(-0.18415, -0.3175)
 
 MAX_VELOCITY: Final[float] = 0
 MAX_ANGULAR_ACCELERATION: Final[float] = 0

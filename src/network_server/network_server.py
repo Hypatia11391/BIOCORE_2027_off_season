@@ -14,6 +14,9 @@ class NetworkServer:
         inst = ntcore.NetworkTableInstance.getDefault()
 
         self.table = inst.getTable("datatable")
+        self.options = ntcore.PubSubOptions(periodic=0.02)
+
+        self.bool_publishers: dict[str, ntcore.BooleanPublisher] = {}
 
         self.double_publishers: dict[str, ntcore.DoublePublisher] = {}
 
@@ -29,15 +32,21 @@ class NetworkServer:
             cls._instance = cls()
         return cls._instance
 
+    def set_bool(self, key: str, value: bool) -> None:
+        if key not in self.bool_publishers:
+            self.bool_publishers[key] = self.table.getBooleanTopic(key).publish(self.options)
+
+        self.bool_publishers[key].set(value)
+
     def set_float(self, key: str, value: float) -> None:
         if key not in self.double_publishers:
-            self.double_publishers[key] = self.table.getDoubleTopic(key).publish()
+            self.double_publishers[key] = self.table.getDoubleTopic(key).publish(self.options)
 
         self.double_publishers[key].set(value)
 
     def set_string_list(self, key: str, list: list[str]):
         if key not in self.string_list_publishers:
-            self.string_list_publishers[key] = self.table.getStringArrayTopic(key).publish()
+            self.string_list_publishers[key] = self.table.getStringArrayTopic(key).publish(self.options)
 
         self.string_list_publishers[key].set(list)
 
@@ -47,9 +56,10 @@ class NetworkServer:
 
             field_table = self.table.getSubTable(key)
 
-            self.field_publishers[key]["robot"] = field_table.getDoubleArrayTopic("robot").publish()
-            self.field_publishers[key]["velocity"] = field_table.getDoubleArrayTopic("velocity").publish()
-            self.field_publishers[key]["trajectory"] = field_table.getDoubleArrayTopic("trajectory").publish()
+            self.field_publishers[key]["robot"] = field_table.getDoubleArrayTopic("robot").publish(self.options)
+            self.field_publishers[key]["velocity"] = field_table.getDoubleArrayTopic("velocity").publish(self.options)
+            self.field_publishers[key]["target-velocity"] = field_table.getDoubleArrayTopic("target-velocity").publish(self.options)
+            self.field_publishers[key]["trajectory"] = field_table.getDoubleArrayTopic("trajectory").publish(self.options)
 
         pose = field.getRobotPose()
 
@@ -68,6 +78,16 @@ class NetworkServer:
                 velocity.X(),
                 velocity.Y(),
                 velocity.rotation().degrees(),
+            ]
+        )
+
+        targetVelocity = field.getObject("target-velocity").getPose()
+
+        self.field_publishers[key]["target-velocity"].set(
+            [
+                targetVelocity.X(),
+                targetVelocity.Y(),
+                targetVelocity.rotation().degrees(),
             ]
         )
 

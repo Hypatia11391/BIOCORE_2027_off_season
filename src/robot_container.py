@@ -1,4 +1,5 @@
 from commands2 import Command
+from commands2.cmd import runOnce
 from pathplannerlib.auto import PathPlannerAuto
 from pathplannerlib.logging import PathPlannerLogging
 from wpilib import DriverStation, Field2d, Joystick
@@ -37,7 +38,9 @@ class RobotContainer:
             consts.STARTING_POSE,
         )
 
-        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx)
+        self.field = Field2d()
+
+        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx, self.field)
         self.intake = Intake()
         self.feed = Feed()
         self.kicker = Kicker()
@@ -51,15 +54,18 @@ class RobotContainer:
 
         NetworkServer.getInstance().set_string_list("auto-list", ["Drive Forward 1m", "Turn 90 Clockwise"])
 
-        self.field = Field2d()
-
         self.autonomous_command = Command()
 
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
 
     def get_autonomous_command(self) -> Command:
-        return PathPlannerAuto("Drive Forward 1m")
-        
+        auto = PathPlannerAuto("Drive Forward 1m")
+
+        auto.isRunning().onTrue(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", True)))
+        auto.isRunning().onFalse(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", False)))
+
+        return auto
+
         command_str = NetworkServer.getInstance().get_string("selected-auto")
 
         print(command_str)
@@ -68,7 +74,7 @@ class RobotContainer:
             self.autonomous_command = PathPlannerAuto(command_str)
         else:
             self.autonomous_command = Command()
-        
+
         return self.autonomous_command
 
     def zero_pose(self) -> None:
