@@ -67,7 +67,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             path_planner_drive,
-            PPHolonomicDriveController(PIDConstants(0.3984375, 0.0, 0.005), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
+            PPHolonomicDriveController(PIDConstants(0.001, 0.0, 0.0), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
             config,
             self.should_flip_path,
             self,
@@ -84,7 +84,7 @@ class DriveTrainMecanum(Subsystem):
 
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
             kV=self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2 * pi)),  # ratio of volts to speed in rad/s
-            kA=0.007,
+            kA=0.00001,
         )
 
         self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
