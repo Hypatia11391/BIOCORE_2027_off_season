@@ -20,7 +20,7 @@ from src.subsystems.mechanisms.shooter import Shooter
 
 
 class RobotContainer:
-    def __init__(self):
+    def __init__(self, robot):
         self.kinematics = MecanumDriveKinematics(
             drive_consts.FRONT_LEFT_LOCATION,
             drive_consts.FRONT_RIGHT_LOCATION,
@@ -37,7 +37,7 @@ class RobotContainer:
             consts.STARTING_POSE,
         )
 
-        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx)
+        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx, robot)
         self.intake = Intake()
         self.feed = Feed()
         self.kicker = Kicker()

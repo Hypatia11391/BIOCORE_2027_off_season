@@ -19,4 +19,5 @@ class PhysicsEngine:
         self.drive = robot.robot_container.drive
     
     def update_sim(self, now: float, tm_diff: float):
+        print('#############PHYSICS>PY')
         self.physics_controller.drive(self.drive.get_relative_speeds(), tm_diff)

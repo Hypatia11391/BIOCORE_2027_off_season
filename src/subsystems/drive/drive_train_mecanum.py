@@ -1,11 +1,13 @@
 from typing import override
-from math import pi
+from math import pi, sqrt
+import os
 
 import rev
 from commands2 import Subsystem
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
+from pathplannerlib.logging import PathPlannerLogging
 import wpilib
 from wpilib import DriverStation, Field2d, SmartDashboard
 from wpilib.drive import MecanumDrive
@@ -21,9 +23,11 @@ from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT
 
 
 class DriveTrainMecanum(Subsystem):
-    def __init__(self, pose_estimator: MecanumDrivePoseEstimator3d, navx: Navx) -> None:
+    def __init__(self, pose_estimator: MecanumDrivePoseEstimator3d, navx: Navx, robot) -> None:
         super().__init__()
 
+        self.robot = robot
+        
         self.left_front_drive = rev.SparkMax(FRONT_LEFT_ID, rev.SparkLowLevel.MotorType.kBrushless)
         self.right_front_drive = rev.SparkMax(FRONT_RIGHT_ID, rev.SparkLowLevel.MotorType.kBrushless)
         self.left_rear_drive = rev.SparkMax(REAR_LEFT_ID, rev.SparkLowLevel.MotorType.kBrushless)
@@ -69,18 +73,22 @@ class DriveTrainMecanum(Subsystem):
             self,
         )
 
+        self.target_pose = Pose2d()
+        @PathPlannerLogging.setLogTargetPoseCallback
+        def f(pose): self.target_pose = pose
+        
         self.field = Field2d()
         SmartDashboard.putData("Field", self.field)
-
+                
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
 
-    def _init_simulation(self):
+    def _init_simulation(self, kA=None):        
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
 
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
             kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),  # ratio of volts to speed in rad/s
-            kA = self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
+            kA = kA or self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
         )
         
         self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
@@ -102,7 +110,7 @@ class DriveTrainMecanum(Subsystem):
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
-        print('speeds:', forward_speed, strafe_speed, turn_speed)
+        #print('speeds:', forward_speed, strafe_speed, turn_speed)
 
         # clamp = 0.25
 
@@ -131,8 +139,8 @@ class DriveTrainMecanum(Subsystem):
         # NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
         # NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
 
-        print(f"{self.navx.get_angualar_velocity()=}")
-        print(f"{speeds.omega=}")
+        #print(f"{self.navx.get_angualar_velocity()=}")
+        #print(f"{speeds.omega=}")
 
         wheel_speeds = self.kinematics.toWheelSpeeds(speeds)
 
@@ -151,8 +159,8 @@ class DriveTrainMecanum(Subsystem):
 
     @override
     def periodic(self) -> None:
-        print(f'{self.get_wheel_speeds()=}')
-        print(f'{self.get_relative_speeds()=}')
+        #print(f'{self.get_wheel_speeds()=}')
+        #print(f'{self.get_relative_speeds()=}')
         print(self.pose_estimator.getEstimatedPosition().toPose2d())
         
         if self.pose_estimator is not None:
@@ -169,10 +177,12 @@ class DriveTrainMecanum(Subsystem):
     
     @override
     def simulationPeriodic(self):
+        print('##########SIMULATION PERIODIC')
+        
         current_time = wpilib.Timer.getFPGATimestamp()
         tm_diff = current_time - self.last_sim_time
         self.last_sim_time = current_time
-        print(f'{self.left_front_drive.get()=}')
+        #print(f'{self.left_front_drive.get()=}')
 
         # Update wheel linear system
         # output must be inverted because yeah
@@ -190,6 +200,7 @@ class DriveTrainMecanum(Subsystem):
         fr_out = self.fr_system_sim.getOutput(0)
         rl_out = self.rl_system_sim.getOutput(0)
         rr_out = self.rr_system_sim.getOutput(0)
+        print(f'############################################################################### {fl_out=}')
         
         # Update encoders
         # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
@@ -246,6 +257,17 @@ class DriveTrainMecanum(Subsystem):
     def reset_pose_3d(self, pose: Pose3d) -> None:
         self.pose_estimator.resetPose(pose)
 
+    def get_pose_rms(self):
+        actual_pose = self.get_pose_2d()
+        print(f'{actual_pose=}')
+        translation_error = actual_pose.translation().distance(self.target_pose.translation())
+        print(f'{translation_error=}')
+        rotation_error = (actual_pose.rotation() - self.target_pose.rotation()).radians()
+        print(f'{rotation_error=}')
+        rotation_weight = 0.4
+        rms = sqrt(translation_error**2 + (rotation_error*rotation_weight)**2)
+        return rms
+    
     def config_drive_motor(self, motor: rev.SparkMax, inverted: bool) -> None:
         config = rev.SparkMaxConfig()
 
