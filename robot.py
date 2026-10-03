@@ -1,3 +1,6 @@
+import typing
+typing.override = lambda x: x
+
 import os
 
 import wpilib
@@ -22,7 +25,6 @@ class Robot(wpilib.TimedRobot):
                 wpilib.simulation.DriverStationSim.notifyNewData()
     
     def autonomousInit(self) -> None:
-        print('################AUTONOMOUS INIT')
         self.autonomous_init = None
         self.autonomous_command = self.robot_container.get_autonomous_command()
 
@@ -30,8 +32,6 @@ class Robot(wpilib.TimedRobot):
         #self.autonomous_init=None
 
     def autonomousPeriodic(self) -> None:
-        print(f'{(self.autonomous_command.isScheduled())=}')
-        if hasattr(self, 'autonomous_init'): print('############################################################################################################################################################################################################################AUTONOMOUS PERIODIC')
         pass
 
     def teleopInit(self) -> None:

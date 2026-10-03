@@ -83,12 +83,12 @@ class DriveTrainMecanum(Subsystem):
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
 
-    def _init_simulation(self, kA=None):        
+    def _init_simulation(self):        
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
 
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
             kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),  # ratio of volts to speed in rad/s
-            kA = kA or self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
+            kA = 0.007820606231689453#self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
         )
         
         self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
@@ -106,6 +106,23 @@ class DriveTrainMecanum(Subsystem):
 
         self.last_sim_time = wpilib.Timer.getFPGATimestamp()
     
+    def reset_simulation(self, kA=None):
+        self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
+
+        wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
+            kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),  # ratio of volts to speed in rad/s
+            kA = kA or self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
+        )
+        
+        self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        self.fr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        self.rl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        self.rr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+
+        self.navx_sim_yaw.set(0.0)
+        
+        self.last_sim_time = wpilib.Timer.getFPGATimestamp()
+
     def should_flip_path(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
 
@@ -159,10 +176,6 @@ class DriveTrainMecanum(Subsystem):
 
     @override
     def periodic(self) -> None:
-        #print(f'{self.get_wheel_speeds()=}')
-        #print(f'{self.get_relative_speeds()=}')
-        print(self.pose_estimator.getEstimatedPosition().toPose2d())
-        
         if self.pose_estimator is not None:
             self.pose_estimator.update(
                 self.navx.get_full_rotation(),
@@ -177,12 +190,9 @@ class DriveTrainMecanum(Subsystem):
     
     @override
     def simulationPeriodic(self):
-        print('##########SIMULATION PERIODIC')
-        
         current_time = wpilib.Timer.getFPGATimestamp()
         tm_diff = current_time - self.last_sim_time
         self.last_sim_time = current_time
-        #print(f'{self.left_front_drive.get()=}')
 
         # Update wheel linear system
         # output must be inverted because yeah
@@ -200,7 +210,6 @@ class DriveTrainMecanum(Subsystem):
         fr_out = self.fr_system_sim.getOutput(0)
         rl_out = self.rl_system_sim.getOutput(0)
         rr_out = self.rr_system_sim.getOutput(0)
-        print(f'############################################################################### {fl_out=}')
         
         # Update encoders
         # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
@@ -257,9 +266,14 @@ class DriveTrainMecanum(Subsystem):
     def reset_pose_3d(self, pose: Pose3d) -> None:
         self.pose_estimator.resetPose(pose)
 
+    def reset_encoders(self):
+        self.left_front_encoder.setPosition(0.0)
+        self.right_front_encoder.setPosition(0.0)
+        self.left_rear_encoder.setPosition(0.0)
+        self.right_rear_encoder.setPosition(0.0)
+
     def get_pose_rms(self):
         actual_pose = self.get_pose_2d()
-        print(f'{actual_pose=}')
         translation_error = actual_pose.translation().distance(self.target_pose.translation())
         print(f'{translation_error=}')
         rotation_error = (actual_pose.rotation() - self.target_pose.rotation()).radians()
