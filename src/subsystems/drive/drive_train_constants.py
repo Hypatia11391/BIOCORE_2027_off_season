@@ -4,7 +4,7 @@ from typing import Final
 from wpimath.geometry import Translation2d
 
 # tune this to cap max output for testing
-MAX_SPEED: Final[float] = 5.2  # 4.845
+MAX_SPEED: Final[float] = 5.9  # 4.845
 
 # CAN IDs (spark max)
 FRONT_LEFT_ID: Final[int] = 9

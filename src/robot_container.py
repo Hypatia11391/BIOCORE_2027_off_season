@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from commands2 import Command
 from commands2.cmd import runOnce
 from pathplannerlib.auto import PathPlannerAuto
@@ -54,15 +52,19 @@ class RobotContainer:
         self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
 
-        autos_path = Path("deploy/pathplanner/autos")
-
-        NetworkServer.getInstance().set_string_list("auto-list", [f.name.removesuffix(".auto") for f in autos_path.iterdir() if f.is_file()])
+        NetworkServer.getInstance().set_string_list("auto-list", ["Drive Forward 1m and Turn 90 Clockwise", "Drive Forward 1m", "Drive With Turn", "Turn 90 Clockwise"])
 
         self.autonomous_command = Command()
 
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
 
     def get_autonomous_command(self) -> Command:
+        self.autonomous_command = PathPlannerAuto("Pick Up Balls")
+        self.autonomous_command.isRunning().onTrue(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", True)))
+        self.autonomous_command.isRunning().onFalse(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", False)))
+
+        return self.autonomous_command
+
         command_str = NetworkServer.getInstance().get_string("selected-auto")
 
         print(command_str)

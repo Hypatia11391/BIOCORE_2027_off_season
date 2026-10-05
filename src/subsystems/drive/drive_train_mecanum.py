@@ -11,6 +11,7 @@ from pathplannerlib.util import DriveFeedforwards
 from wpilib import DriverStation, Field2d, SmartDashboard
 from wpilib.drive import MecanumDrive
 from wpilib.simulation import LinearSystemSim_1_1_1, SimDeviceSim
+from wpimath.controller import PIDController
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.geometry import Pose2d, Pose3d
 from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
@@ -67,7 +68,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             path_planner_drive,
-            PPHolonomicDriveController(PIDConstants(0.001, 0.0, 0.0), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
+            PPHolonomicDriveController(PIDConstants(2.5, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
             config,
             self.should_flip_path,
             self,
@@ -78,6 +79,15 @@ class DriveTrainMecanum(Subsystem):
 
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
+
+        kP = 1.0285
+        kI = 0
+        kD = 0
+
+        self.fl_pid = PIDController(kP, kI, kD)
+        self.fr_pid = PIDController(kP, kI, kD)
+        self.rl_pid = PIDController(kP, kI, kD)
+        self.rr_pid = PIDController(kP, kI, kD)
 
     def _init_simulation(self):
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
@@ -120,38 +130,23 @@ class DriveTrainMecanum(Subsystem):
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
 
     def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
-        # forward_speed = speeds.vx
-        # strafe_speed = speeds.vy
-        # turn_speed = speeds.omega
-
-        # forward_speed_percent = forward_speed / MAX_SPEED
-        # strafe_speed_percent = strafe_speed / MAX_SPEED
-        # turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
-
-        # self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
-
-        # NetworkServer.getInstance().set_float("front-left", self.left_front_drive.getAppliedOutput())
-        # NetworkServer.getInstance().set_float("front-right", self.right_front_drive.getAppliedOutput())
-        # NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
-        # NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
-
-        # print(f"{self.navx.get_angualar_velocity()=}")
-        # print(f"{speeds.omega=}")
-
         wheel_speeds = self.kinematics.toWheelSpeeds(speeds)
 
         wheel_speeds.desaturate(MAX_SPEED)
 
-        front_left_percent = wheel_speeds.frontLeft / MAX_SPEED
-        front_right_percent = wheel_speeds.frontRight / MAX_SPEED
-        rear_left_percent = wheel_speeds.rearLeft / MAX_SPEED
-        rear_right_percent = wheel_speeds.rearRight / MAX_SPEED
-
         bad_negation = -1 if wpilib.RobotBase.isSimulation() else 1
-        self.left_front_drive.set(front_left_percent * bad_negation)
-        self.right_front_drive.set(front_right_percent * bad_negation)
-        self.left_rear_drive.set(rear_left_percent * bad_negation)
-        self.right_rear_drive.set(rear_right_percent * bad_negation)
+
+        wheel_speeds *= bad_negation
+
+        fl_pid_volts = self.fl_pid.calculate(self.left_front_encoder.getVelocity(), wheel_speeds.frontLeft)
+        fr_pid_volts = self.fr_pid.calculate(self.right_front_encoder.getVelocity(), wheel_speeds.frontRight)
+        rl_pid_volts = self.rl_pid.calculate(self.left_rear_encoder.getVelocity(), wheel_speeds.rearLeft)
+        rr_pid_volts = self.rr_pid.calculate(self.right_rear_encoder.getVelocity(), wheel_speeds.rearRight)
+
+        self.left_front_drive.setVoltage(fl_pid_volts)
+        self.right_front_drive.setVoltage(fr_pid_volts)
+        self.left_rear_drive.setVoltage(rl_pid_volts)
+        self.right_rear_drive.setVoltage(rr_pid_volts)
 
     @override
     def periodic(self) -> None:
