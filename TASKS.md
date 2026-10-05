@@ -6,5 +6,5 @@
 - Tune vision constants
 
 ## Robot
-- Figure out neural network with cameras (talk to Ariel)
-- Make sure Path Planner works
+- Make sure Path Planner works (accurately)
+- Documentation of some sort (figure it out)
