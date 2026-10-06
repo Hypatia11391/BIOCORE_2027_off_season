@@ -8,6 +8,8 @@ from commands2 import CommandScheduler
 
 from src.network_server.network_server import NetworkServer
 from src.robot_container import RobotContainer
+from src.recording.recording import Recording
+from src.commands.drive_recording import DriveRecording
 
 
 class Robot(wpilib.TimedRobot):
@@ -42,8 +44,9 @@ class Robot(wpilib.TimedRobot):
         pass
 
     def testInit(self) -> None:
-        print(f'{self.robot_container.drive.get_pose_rms()=}')
-        pass
+        self.autonomous_command.cancel()
+        self.test_command = DriveRecording(self.robot_container.drive, Recording.from_json_file('outputs.json'))
+        CommandScheduler.getInstance().schedule(self.test_command)
 
     def testPeriodic(self) -> None:
         pass

@@ -24,6 +24,8 @@ from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT
 
 class DriveTrainMecanum(Subsystem):
     def __init__(self, pose_estimator: MecanumDrivePoseEstimator3d, navx: Navx, robot) -> None:
+        self.traj = []
+        
         super().__init__()
 
         self.robot = robot
@@ -174,8 +176,16 @@ class DriveTrainMecanum(Subsystem):
         self.left_rear_drive.set(rear_left_percent*bad_negation)
         self.right_rear_drive.set(rear_right_percent*bad_negation)
 
+    def drive_from_applied_outputs(self, fl_percent, fr_percent, rl_percent, rr_percent):
+        print(f'driving from applied output {fl_percent=}')
+        self.left_front_drive.set(fl_percent)
+        self.right_front_drive.set(fr_percent)
+        self.left_rear_drive.set(rl_percent)
+        self.right_rear_drive.set(rr_percent)
+    
     @override
     def periodic(self) -> None:
+        print('periodic')
         if self.pose_estimator is not None:
             self.pose_estimator.update(
                 self.navx.get_full_rotation(),
@@ -187,6 +197,8 @@ class DriveTrainMecanum(Subsystem):
             self.robot_drive.setSafetyEnabled(False)
         else:
             self.robot_drive.setSafetyEnabled(True)
+
+        self.traj.append({})
     
     @override
     def simulationPeriodic(self):
