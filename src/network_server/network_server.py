@@ -20,6 +20,8 @@ class NetworkServer:
 
         self.double_publishers: dict[str, ntcore.DoublePublisher] = {}
 
+        self.double_list_publishers: dict[str, ntcore.DoubleArrayPublisher] = {}
+
         self.field_publishers: dict[str, dict[str, ntcore.DoubleArrayPublisher]] = {}
 
         self.string_list_publishers: dict[str, ntcore.StringArrayPublisher] = {}
@@ -43,6 +45,12 @@ class NetworkServer:
             self.double_publishers[key] = self.table.getDoubleTopic(key).publish(self.options)
 
         self.double_publishers[key].set(value)
+
+    def set_float_list(self, key: str, value: list[float]) -> None:
+        if key not in self.double_list_publishers:
+            self.double_list_publishers[key] = self.table.getDoubleArrayTopic(key).publish(self.options)
+
+        self.double_list_publishers[key].set(value)
 
     def set_string_list(self, key: str, list: list[str]):
         if key not in self.string_list_publishers:

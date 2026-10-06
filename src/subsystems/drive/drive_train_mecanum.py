@@ -18,6 +18,7 @@ from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDri
 from wpimath.system.plant import DCMotor, LinearSystemId
 
 from src.navx.navx import Navx
+from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
 
@@ -80,7 +81,7 @@ class DriveTrainMecanum(Subsystem):
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
 
-        kP = 1.0285
+        kP = 0.3
         kI = 0
         kD = 0
 
@@ -165,6 +166,16 @@ class DriveTrainMecanum(Subsystem):
             self.robot_drive.setSafetyEnabled(False)
         else:
             self.robot_drive.setSafetyEnabled(True)
+
+        NetworkServer.getInstance().set_float_list(
+            "drive-applied-output",
+            [
+                self.left_front_drive.getAppliedOutput(),
+                self.right_front_drive.getAppliedOutput(),
+                self.left_rear_drive.getAppliedOutput(),
+                self.right_rear_drive.getAppliedOutput(),
+            ],
+        )
 
     @override
     def simulationPeriodic(self):
