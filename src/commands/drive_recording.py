@@ -13,6 +13,8 @@ class DriveRecording(Command):
 
         self.drive = drive
         self.recording = recording
+
+        self.addRequirements(self.drive)
     
     @override
     def initialize(self):
@@ -22,8 +24,8 @@ class DriveRecording(Command):
     def execute(self):
         frame = self.recording.next_frame()
         self.drive.drive_from_applied_outputs(
-            fl_percent = frame['applied-outputs'][0],
-            fr_percent = frame['applied-outputs'][1],
-            rl_percent = frame['applied-outputs'][2],
-            rr_percent = frame['applied-outputs'][3],
+            fl_percent = frame['applied-outputs'][0]*100,
+            fr_percent = frame['applied-outputs'][1]*100,
+            rl_percent = frame['applied-outputs'][2]*100,
+            rr_percent = frame['applied-outputs'][3]*100,
         )

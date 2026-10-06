@@ -138,6 +138,8 @@ class DriveTrainMecanum(Subsystem):
         # turn_speed = max(min(turn_speed, clamp), -clamp)
 
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
+        print(f'{forward_speed=} {strafe_speed=} {turn_speed=}')
+        print(f'{self.front_left_drive.getAppliedOutputs()=}')
 
     def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
