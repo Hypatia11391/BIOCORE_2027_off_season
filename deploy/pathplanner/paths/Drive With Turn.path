@@ -8,7 +8,7 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 0.5,
+        "x": 1.0,
         "y": 0.0
       },
       "isLocked": false,
@@ -20,8 +20,56 @@
         "y": 0.0
       },
       "prevControl": {
-        "x": 0.5,
-        "y": 6.123233995736766e-17
+        "x": 0.75,
+        "y": 3.061616997868383e-17
+      },
+      "nextControl": {
+        "x": 1.25,
+        "y": 0.0
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 1.0,
+        "y": 1.0
+      },
+      "prevControl": {
+        "x": 1.0,
+        "y": 0.7500000000000038
+      },
+      "nextControl": {
+        "x": 1.0,
+        "y": 1.25
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 0.0,
+        "y": 1.0
+      },
+      "prevControl": {
+        "x": 0.25,
+        "y": 1.0
+      },
+      "nextControl": {
+        "x": -0.2499999999999999,
+        "y": 1.0
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "prevControl": {
+        "x": 1.8369701987210297e-16,
+        "y": 1.0
       },
       "nextControl": null,
       "isLocked": false,
