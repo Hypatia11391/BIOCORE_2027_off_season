@@ -40,7 +40,7 @@ class RobotContainer:
 
         self.field = Field2d()
 
-        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx, self.robot, self.field)
+        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx, robot, self.field)
         self.intake = Intake()
         self.feed = Feed()
         self.kicker = Kicker()

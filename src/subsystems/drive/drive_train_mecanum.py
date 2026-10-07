@@ -155,7 +155,7 @@ class DriveTrainMecanum(Subsystem):
 
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
         print(f'{forward_speed=} {strafe_speed=} {turn_speed=}')
-        print(f'{self.front_left_drive.getAppliedOutputs()=}')
+        print(f'{self.left_front_drive.getAppliedOutput()=}')
 
     def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
@@ -180,9 +180,13 @@ class DriveTrainMecanum(Subsystem):
         #print(f"{speeds.omega=}")
 
         wheel_speeds = self.kinematics.toWheelSpeeds(speeds)
-
         wheel_speeds.desaturate(MAX_SPEED)
 
+        front_left_percent = wheel_speeds.frontLeft / MAX_SPEED
+        front_right_percent = wheel_speeds.frontRight / MAX_SPEED
+        rear_left_percent = wheel_speeds.rearLeft / MAX_SPEED
+        rear_right_percent = wheel_speeds.rearRight / MAX_SPEED
+        
         bad_negation = -1 if wpilib.RobotBase.isSimulation() else 1
         self.left_front_drive.set(front_left_percent*bad_negation)
         self.right_front_drive.set(front_right_percent*bad_negation)
