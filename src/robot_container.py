@@ -59,7 +59,7 @@ class RobotContainer:
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
 
     def get_autonomous_command(self) -> Command:
-        self.autonomous_command = PathPlannerAuto("Pick Up Balls")
+        self.autonomous_command = PathPlannerAuto("Drive Forward 1m and Turn 90 Clockwise")
         self.autonomous_command.isRunning().onTrue(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", True)))
         self.autonomous_command.isRunning().onFalse(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", False)))
 

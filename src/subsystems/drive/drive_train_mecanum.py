@@ -106,7 +106,7 @@ class DriveTrainMecanum(Subsystem):
 
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
             kV = self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),  # ratio of volts to speed in rad/s
-            kA = 0.007820606231689453#self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
+            kA = 0.0007820606231689453#self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
         )
                 
         self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
@@ -154,8 +154,8 @@ class DriveTrainMecanum(Subsystem):
         # turn_speed = max(min(turn_speed, clamp), -clamp)
 
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
-        print(f'{forward_speed=} {strafe_speed=} {turn_speed=}')
-        print(f'{self.left_front_drive.getAppliedOutput()=}')
+        #print(f'{forward_speed=} {strafe_speed=} {turn_speed=}')
+        #print(f'{self.left_front_drive.getAppliedOutput()=}')
 
     def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
@@ -193,11 +193,18 @@ class DriveTrainMecanum(Subsystem):
         self.left_rear_drive.set(rear_left_percent*bad_negation)
         self.right_rear_drive.set(rear_right_percent*bad_negation)
 
+    def drive_from_applied_outputs(self, fl_percent, fr_percent, rl_percent, rr_percent):
+        print(f'driving from applied output {fl_percent=}')
+        self.left_front_drive.set(fl_percent)
+        self.right_front_drive.set(fr_percent)
+        self.left_rear_drive.set(rl_percent)
+        self.right_rear_drive.set(rr_percent)
+    
     @override
     def periodic(self) -> None:
-        print(f'{self.get_wheel_speeds()=}')
-        print(f'{self.get_relative_speeds()=}')
-        print(self.pose_estimator.getEstimatedPosition().toPose2d())
+        #print(f'{self.get_wheel_speeds()=}')
+        #print(f'{self.get_relative_speeds()=}')
+        #print(self.pose_estimator.getEstimatedPosition().toPose2d())
         
         if self.pose_estimator is not None:
             self.pose_estimator.update(
@@ -313,7 +320,7 @@ class DriveTrainMecanum(Subsystem):
         print(f'{translation_error=}')
         rotation_error = (actual_pose.rotation() - self.target_pose.rotation()).radians()
         print(f'{rotation_error=}')
-        rotation_weight = 0.4
+        rotation_weight = 0.2
         rms = sqrt(translation_error**2 + (rotation_error*rotation_weight)**2)
         return rms
     

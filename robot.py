@@ -44,9 +44,12 @@ class Robot(wpilib.TimedRobot):
         pass
 
     def testInit(self) -> None:
-        self.autonomous_command.cancel()
-        self.test_command = DriveRecording(self.robot_container.drive, Recording.from_json_file('outputs.json'))
-        CommandScheduler.getInstance().schedule(self.test_command)
+        print(f'{self.robot_container.drive.get_pose_rms()=}')
+        recording_json_filename = os.environ.get("RECORDING_JSON", None)
+        if recording_json_filename is not None:
+            self.autonomous_command.cancel()
+            self.test_command = DriveRecording(self.robot_container.drive, Recording.from_json_file(recording_json_filename))
+            CommandScheduler.getInstance().schedule(self.test_command)
 
     def testPeriodic(self) -> None:
         pass

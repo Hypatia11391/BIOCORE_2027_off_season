@@ -15,5 +15,4 @@ class Recording:
     def next_frame(self):
         frame = self.data[self.i]
         self.i += 1
-        print(f'{self.i=}/{len(self.data)}')
         return frame
