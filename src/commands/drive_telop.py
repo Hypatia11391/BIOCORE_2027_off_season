@@ -50,5 +50,5 @@ class DriveTelop(Command):
             #return 1 if axis==1 else 0
             return 0
         else:
-            return self.controller.getRawAxis(axis)
+            return round(self.controller.getRawAxis(axis))
 

@@ -1,17 +1,20 @@
 from scipy.optimize import least_squares, differential_evolution
+from wpilib.simulation import DriverStationSim
+from wpimath.kinematics import ChassisSpeeds
 
 from src.constants import STARTING_POSE
 
 FPS = 50
 kA_TOLERANCE = 0.000001
 
-def cost_kA(control, robot, kA):
-    print(f'Costing {kA=}...')
-    
-    robot.robot_container.drive.reset_simulation(kA)
+def cost_kA(control, robot, kA, kV=None):
+    print(f'Costing {kA=} {kV=}...')
+
+    robot.robot_container.drive.reset_simulation(kA, kV)
     robot.robot_container.drive.reset_encoders()
     robot.robot_container.drive.reset_pose_3d(STARTING_POSE)
-
+    robot.robot_container.drive.robot_drive.setSafetyEnabled(False)
+    
     for _ in range(1*FPS):
         control.step_timing(
             seconds=1/FPS,
@@ -19,31 +22,48 @@ def cost_kA(control, robot, kA):
             enabled=True,
         )
 
-    robot.robot_container.drive.reset_simulation(kA)
+    robot.robot_container.drive.reset_simulation(kA, kV)
     robot.robot_container.drive.reset_encoders()
     robot.robot_container.drive.reset_pose_3d(STARTING_POSE)
+    robot.robot_container.drive.robot_drive.setSafetyEnabled(False)
+
+    cost = 0
+
+    DriverStationSim.setTest(True)
     
     while True:
         control.step_timing(
             seconds=1/FPS,
-            autonomous=True,
+            autonomous=False,
             enabled=True,
         )
-        speeds = robot.robot_container.drive.get_relative_speeds()
-        if speeds.vx<0.0001 and speeds.vy<0.0001 and speeds.omega<0.00005:
-          break
 
-    cost = robot.robot_container.drive.get_pose_rms()
-    print(f'{cost=}')
+        cost += robot.robot_container.drive.get_speeds_rms(ChassisSpeeds(*robot.test_command.recording.current_frame()['chassis-speeds']))**2
+        
+        if robot.test_command.recording.i >= len(robot.test_command.recording.data)-1:
+            break
+        
+        #speeds = robot.robot_container.drive.get_relative_speeds()
+        #if speeds.vx<0.0001 and speeds.vy<0.0001 and speeds.omega<0.00005:
+          #break
+
+    DriverStationSim.setTest(False)
+    
+    #cost = robot.robot_container.drive.get_pose_rms()
+    print(f'done, f{cost=}')
     return cost
 
 def test_tune_simulation_constants(control, robot):
     print('############## Tuning kA...')
     with control.run_robot():
         kA = differential_evolution(
-            lambda params: cost_kA(control, robot, params[0]),
-            [0.25], # initial guess
-            bounds=([0],[0.5]),
-            verbose=True,
+            func=lambda params: cost_kA(control, robot, params[0],params[1]),
+            bounds=[(0,0.5),(0,0.5)],
+            strategy='best1bin', # Standard mutation strategy
+            popsize=10,          # Population multiplier (total population = 10 * 2 params = 20)
+            maxiter=300,          # Maximum generations to prevent infinite loops
+            tol=0.01,            # Relative tolerance for convergence
+            workers=1,          # Set to -1 to run simulations in parallel across all CPU cores
+            seed=42
         )
     print(f'best {kA=}')

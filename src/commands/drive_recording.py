@@ -23,9 +23,9 @@ class DriveRecording(Command):
     @override
     def execute(self):
         frame = self.recording.next_frame()
-        self.drive.drive_from_applied_outputs(
-            fl_percent = frame['applied-outputs'][0]*100,
-            fr_percent = frame['applied-outputs'][1]*100,
-            rl_percent = frame['applied-outputs'][2]*100,
-            rr_percent = frame['applied-outputs'][3]*100,
+        self.drive.drive_from_raw_motor_set_values(
+            fl_percent = frame['set-values'][0],
+            fr_percent = frame['set-values'][1],
+            rl_percent = frame['set-values'][2],
+            rr_percent = frame['set-values'][3],
         )

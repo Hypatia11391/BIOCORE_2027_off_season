@@ -2,6 +2,7 @@ import typing
 typing.override = lambda x: x
 
 import os
+import json
 
 import wpilib
 from commands2 import CommandScheduler
@@ -44,7 +45,11 @@ class Robot(wpilib.TimedRobot):
         pass
 
     def testInit(self) -> None:
-        print(f'{self.robot_container.drive.get_pose_rms()=}')
+        #print(f'{self.robot_container.drive.get_pose_rms()=}')
+        #with open("sim_output.json", 'w') as f:
+            #json.dump(self.robot_container.drive.traj, f)
+        #print("dumped traj to sim_output.json")
+        
         recording_json_filename = os.environ.get("RECORDING_JSON", None)
         if recording_json_filename is not None:
             self.autonomous_command.cancel()

@@ -4,7 +4,7 @@ import json
 class Recording:
     def __init__(self, data: list[dict]):
         self.data = data
-        self.i = 0
+        self.i = -1
 
     @classmethod
     def from_json_file(cls, filename: str):
@@ -13,6 +13,11 @@ class Recording:
         return cls(data)
 
     def next_frame(self):
+        if self.i<len(self.data)-1:
+            self.i += 1
         frame = self.data[self.i]
-        self.i += 1
         return frame
+
+    def current_frame(self):
+        assert self.i>=0
+        return self.data[self.i]
