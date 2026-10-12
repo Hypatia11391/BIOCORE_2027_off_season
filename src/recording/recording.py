@@ -21,3 +21,6 @@ class Recording:
     def current_frame(self):
         assert self.i>=0
         return self.data[self.i]
+
+    def is_finished(self):
+        return self.i>=len(self.data)-1

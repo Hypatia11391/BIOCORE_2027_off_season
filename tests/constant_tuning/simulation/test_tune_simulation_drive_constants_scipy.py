@@ -3,6 +3,7 @@ from wpilib.simulation import DriverStationSim
 from wpimath.kinematics import ChassisSpeeds
 
 from src.constants import STARTING_POSE
+from tests.util import run_for, RobotState
 
 FPS = 50
 kA_TOLERANCE = 0.000001
@@ -15,12 +16,13 @@ def cost_kA(control, robot, kA, kV=None):
     robot.robot_container.drive.reset_pose_3d(STARTING_POSE)
     robot.robot_container.drive.robot_drive.setSafetyEnabled(False)
     
-    for _ in range(1*FPS):
-        control.step_timing(
-            seconds=1/FPS,
-            autonomous=False,
-            enabled=True,
-        )
+    run_for(control, 1, FPS, RobotState.TELEOP)
+    #for _ in range(1*FPS):
+    #    control.step_timing(
+    #        seconds=1/FPS,
+    #        autonomous=False,
+    #        enabled=True,
+    #    )
 
     robot.robot_container.drive.reset_simulation(kA, kV)
     robot.robot_container.drive.reset_encoders()
@@ -29,27 +31,34 @@ def cost_kA(control, robot, kA, kV=None):
 
     cost = 0
 
-    DriverStationSim.setTest(True)
-    
-    while True:
-        control.step_timing(
-            seconds=1/FPS,
-            autonomous=False,
-            enabled=True,
-        )
-
+    def periodic_fn():
         cost += robot.robot_container.drive.get_speeds_rms(ChassisSpeeds(*robot.test_command.recording.current_frame()['chassis-speeds']))**2
         
         if robot.test_command.recording.i >= len(robot.test_command.recording.data)-1:
-            break
-        
-        #speeds = robot.robot_container.drive.get_relative_speeds()
-        #if speeds.vx<0.0001 and speeds.vy<0.0001 and speeds.omega<0.00005:
-          #break
+            return True
+    run_for(control, 1000, FPS, RobotState.TEST, periodic_fn)
 
-    DriverStationSim.setTest(False)
+    #DriverStationSim.setTest(True)
+    #
+    #while True:
+    #    control.step_timing(
+    #        seconds=1/FPS,
+    #        autonomous=False,
+    #        enabled=True,
+    #    )
+
+    #    cost += robot.robot_container.drive.get_speeds_rms(ChassisSpeeds(*robot.test_command.recording.current_frame()['chassis-speeds']))**2
+    #    
+    #    if robot.test_command.recording.i >= len(robot.test_command.recording.data)-1:
+    #        break
+    #    
+    #    #speeds = robot.robot_container.drive.get_relative_speeds()
+    #    #if speeds.vx<0.0001 and speeds.vy<0.0001 and speeds.omega<0.00005:
+    #      #break
+
+    #DriverStationSim.setTest(False)
     
-    #cost = robot.robot_container.drive.get_pose_rms()
+    cost = robot.robot_container.drive.get_pose_rms()
     print(f'done, f{cost=}')
     return cost
 

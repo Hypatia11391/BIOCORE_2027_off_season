@@ -1,16 +1,6 @@
 from math import pi
 
-import wpilib
-from wpilib.simulation import SimDeviceSim, LinearSystemSim_1_1_1
 from pyfrc.physics.core import PhysicsInterface
-from wpimath.kinematics import MecanumDriveWheelSpeeds
-from rev import SparkMaxSim
-from wpimath.system.plant import DCMotor, LinearSystemId
-
-from src.subsystems.drive.drive_train_constants import WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, MAX_SPEED
-
-
-kA = 0.0007
 
 
 class PhysicsEngine: 
