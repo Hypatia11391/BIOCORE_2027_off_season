@@ -11,7 +11,7 @@ from pathplannerlib.util import DriveFeedforwards
 from wpilib import DriverStation, Field2d, SmartDashboard
 from wpilib.drive import MecanumDrive
 from wpilib.simulation import LinearSystemSim_1_1_1, SimDeviceSim
-from wpimath.controller import PIDController
+from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.geometry import Pose2d, Pose3d
 from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
@@ -69,7 +69,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             path_planner_drive,
-            PPHolonomicDriveController(PIDConstants(2.5, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
+            PPHolonomicDriveController(PIDConstants(0.0, 0.0, 0.0), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
             config,
             self.should_flip_path,
             self,
@@ -81,7 +81,7 @@ class DriveTrainMecanum(Subsystem):
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
 
-        kP = 0.3
+        kP = 0.5
         kI = 0
         kD = 0
 
@@ -89,6 +89,15 @@ class DriveTrainMecanum(Subsystem):
         self.fr_pid = PIDController(kP, kI, kD)
         self.rl_pid = PIDController(kP, kI, kD)
         self.rr_pid = PIDController(kP, kI, kD)
+
+        kS = 2.4
+        kV = 0.8
+        kA = 2.5
+
+        self.fl_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
+        self.fr_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
+        self.rl_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
+        self.rr_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
 
     def _init_simulation(self):
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
@@ -144,10 +153,15 @@ class DriveTrainMecanum(Subsystem):
         rl_pid_volts = self.rl_pid.calculate(self.left_rear_encoder.getVelocity(), wheel_speeds.rearLeft)
         rr_pid_volts = self.rr_pid.calculate(self.right_rear_encoder.getVelocity(), wheel_speeds.rearRight)
 
-        self.left_front_drive.setVoltage(fl_pid_volts)
-        self.right_front_drive.setVoltage(fr_pid_volts)
-        self.left_rear_drive.setVoltage(rl_pid_volts)
-        self.right_rear_drive.setVoltage(rr_pid_volts)
+        fl_feed_forward_volts = self.fl_feed_forward.calculate(wheel_speeds.frontLeft)
+        fr_feed_forward_volts = self.fr_feed_forward.calculate(wheel_speeds.frontRight)
+        rl_feed_forward_volts = self.rl_feed_forward.calculate(wheel_speeds.rearLeft)
+        rr_feed_forward_volts = self.rr_feed_forward.calculate(wheel_speeds.rearRight)
+
+        self.left_front_drive.setVoltage(fl_feed_forward_volts + fl_pid_volts)
+        self.right_front_drive.setVoltage(fr_feed_forward_volts + fr_pid_volts)
+        self.left_rear_drive.setVoltage(rl_feed_forward_volts + rl_pid_volts)
+        self.right_rear_drive.setVoltage(rr_feed_forward_volts + rr_pid_volts)
 
     @override
     def periodic(self) -> None:
@@ -264,5 +278,7 @@ class DriveTrainMecanum(Subsystem):
         conversion_ratio = WHEEL_CIRCUMFERENCE / WHEEL_GEAR_RATIO
         config.encoder.positionConversionFactor(conversion_ratio)
         config.encoder.velocityConversionFactor(conversion_ratio / 60)
+        config.encoder.quadratureMeasurementPeriod(8)
+        config.encoder.quadratureAverageDepth(2)
 
         motor.configure(config, rev.ResetMode.kResetSafeParameters, rev.PersistMode.kPersistParameters)
