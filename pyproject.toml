@@ -27,7 +27,7 @@ requires = [
     "robotpy-rev",
     "robotpy-commands-v2",
     "robotpy-navx",
-    "robotpy-pathplannerlib"
+    "robotpy-pathplannerlib",
 ]
 
 [tool.ruff]
