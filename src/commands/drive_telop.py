@@ -35,7 +35,7 @@ class DriveTelop(Command):
             strafe_speed * SPEED_SCALAR,
             turn_speed * SPEED_SCALAR,
         )
-        
+
     @override
     def end(self, interrupted: bool) -> None:
         pass
@@ -45,10 +45,9 @@ class DriveTelop(Command):
         return False
 
     def get_controller_axis(self, axis):
-        if self.controller.getAxisCount()==0 and RobotBase.isSimulation():
-            #print("no drive controller axes, using default")
-            #return 1 if axis==1 else 0
+        if self.controller.getAxisCount() == 0 and RobotBase.isSimulation():
+            # print("no drive controller axes, using default")
+            # return 1 if axis==1 else 0
             return 0
         else:
             return round(self.controller.getRawAxis(axis))
-

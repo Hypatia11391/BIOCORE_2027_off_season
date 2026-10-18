@@ -20,7 +20,8 @@ from wpimath.system.plant import DCMotor, LinearSystemId
 
 from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
-from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ACCELERATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
+from src.simulation.mecanum_drive_sim import MecanumDriveSim, MecanumDriveSimSpec
+from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_ACCELERATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, WHEEL_RADIUS
 from src.subsystems.drive.logged_spark_max import LoggedSparkMax
 
 
@@ -105,20 +106,69 @@ class DriveTrainMecanum(Subsystem):
     def _init_simulation(self):
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
 
-        wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
-            kV=self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2 * pi)),  # ratio of volts to speed in rad/s
-            kA=0.0007820606231689453,  # self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
-        )
-        print(self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2 * pi)))
-        self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
-        self.fr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
-        self.rl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
-        self.rr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        # wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
+        #     kV=self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2 * pi)),  # ratio of volts to speed in rad/s
+        #     kA=0.0007820606231689453,  # self.battery_voltage / (MAX_ACCELERATION / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2*pi)),
+        # )
 
-        self.fl_motor_sim = rev.SparkMaxSim(self.left_front_drive, DCMotor.NEO(1))
-        self.fr_motor_sim = rev.SparkMaxSim(self.right_front_drive, DCMotor.NEO(1))
-        self.rl_motor_sim = rev.SparkMaxSim(self.left_rear_drive, DCMotor.NEO(1))
-        self.rr_motor_sim = rev.SparkMaxSim(self.right_rear_drive, DCMotor.NEO(1))
+        # self.fl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        # self.fr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        # self.rl_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+        # self.rr_system_sim = LinearSystemSim_1_1_1(wheel_plant)
+
+        # self.fl_motor_sim = rev.SparkMaxSim(self.left_front_drive, DCMotor.NEO(1))
+        # self.fr_motor_sim = rev.SparkMaxSim(self.right_front_drive, DCMotor.NEO(1))
+        # self.rl_motor_sim = rev.SparkMaxSim(self.left_rear_drive, DCMotor.NEO(1))
+        # self.rr_motor_sim = rev.SparkMaxSim(self.right_rear_drive, DCMotor.NEO(1))
+
+        self.fl_spark_sim = rev.SparkMaxSim(self.left_front_drive, DCMotor.NEO(1))
+        self.fr_spark_sim = rev.SparkMaxSim(self.right_front_drive, DCMotor.NEO(1))
+        self.rl_spark_sim = rev.SparkMaxSim(self.left_rear_drive, DCMotor.NEO(1))
+        self.rr_spark_sim = rev.SparkMaxSim(self.right_rear_drive, DCMotor.NEO(1))
+
+        self.fl_encoder_sim = self.fl_spark_sim.getRelativeEncoderSim()
+        self.fr_encoder_sim = self.fr_spark_sim.getRelativeEncoderSim()
+        self.rl_encoder_sim = self.rl_spark_sim.getRelativeEncoderSim()
+        self.rr_encoder_sim = self.rr_spark_sim.getRelativeEncoderSim()
+
+        kV = 2.4
+        kA = 2.0
+
+        wheel_plant_fl = LinearSystemId.identifyVelocitySystemRadians(
+            kV=kV,
+            kA=kA,
+        )
+        wheel_plant_fr = LinearSystemId.identifyVelocitySystemRadians(
+            kV=kV,
+            kA=kA,
+        )
+        wheel_plant_rl = LinearSystemId.identifyVelocitySystemRadians(
+            kV=kV,
+            kA=kA,
+        )
+        wheel_plant_rr = LinearSystemId.identifyVelocitySystemRadians(
+            kV=kV,
+            kA=kA,
+        )
+
+        plants = (wheel_plant_fl, wheel_plant_fr, wheel_plant_rl, wheel_plant_rr)
+
+        config = RobotConfig.fromGUISettings()
+        spec = MecanumDriveSimSpec(
+            gear_ratio=WHEEL_GEAR_RATIO,
+            moi=config.MOI,
+            mass=config.massKG,
+            wheel_radius=WHEEL_RADIUS,
+            wheel_positions=(
+                FRONT_LEFT_LOCATION,
+                FRONT_RIGHT_LOCATION,
+                REAR_LEFT_LOCATION,
+                REAR_RIGHT_LOCATION,
+            ),
+            max_volts=12,
+        )
+
+        self.drive_sim = MecanumDriveSim(plants, spec)
 
         self.navx_sim = SimDeviceSim("navX-Sensor[4]")
         self.navx_sim_yaw = self.navx_sim.getDouble("Yaw")
@@ -146,7 +196,7 @@ class DriveTrainMecanum(Subsystem):
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
-        # print('speeds:', forward_speed, strafe_speed, turn_speed)
+        print("speeds:", forward_speed, strafe_speed, turn_speed)
 
         # clamp = 0.25
 
@@ -155,7 +205,7 @@ class DriveTrainMecanum(Subsystem):
         # turn_speed = max(min(turn_speed, clamp), -clamp)
 
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
-        print(f"fl applied output: {self.left_front_drive.getAppliedOutput()}")
+        # print(f"fl applied output: {self.left_front_drive.getAppliedOutput()}")
         # print(f'{forward_speed=} {strafe_speed=} {turn_speed=}')
         # print(f'{self.left_front_drive.getAppliedOutput()=}')
 
@@ -249,33 +299,33 @@ class DriveTrainMecanum(Subsystem):
         tm_diff = current_time - self.last_sim_time
         self.last_sim_time = current_time
 
-        # Update wheel linear system
-        # output must be inverted because yeah
-        self.fl_system_sim.setInput(0, -self.left_front_drive.get() * self.battery_voltage)
-        self.fr_system_sim.setInput(0, -self.right_front_drive.get() * self.battery_voltage)
-        self.rl_system_sim.setInput(0, -self.left_rear_drive.get() * self.battery_voltage)
-        self.rr_system_sim.setInput(0, -self.right_rear_drive.get() * self.battery_voltage)
+        # self.fl_motor_sim.iterate(fl_out * conversion_factor, self.battery_voltage, tm_diff)
+        # self.fr_motor_sim.iterate(fr_out * conversion_factor, self.battery_voltage, tm_diff)
+        # self.rl_motor_sim.iterate(rl_out * conversion_factor, self.battery_voltage, tm_diff)
+        # self.rr_motor_sim.iterate(rr_out * conversion_factor, self.battery_voltage, tm_diff)
 
-        self.fl_system_sim.update(tm_diff)
-        self.fr_system_sim.update(tm_diff)
-        self.rl_system_sim.update(tm_diff)
-        self.rr_system_sim.update(tm_diff)
+        self.drive_sim.set_inputs(
+            self.left_front_drive.get() * 12,
+            self.right_front_drive.get() * 12,
+            self.left_rear_drive.get() * 12,
+            self.right_rear_drive.get() * 12,
+        )
+        self.drive_sim.update(0.02)
 
-        fl_out = self.fl_system_sim.getOutput(0)
-        fr_out = self.fr_system_sim.getOutput(0)
-        rl_out = self.rl_system_sim.getOutput(0)
-        rr_out = self.rr_system_sim.getOutput(0)
+        print(f"SETTING fl encoder sim position to {self.drive_sim.get_fl_position()=}, Sim encoder position is {self.fl_spark_sim.getPosition()=} normal encoder: {self.left_front_encoder.getPosition()=}")
+        print(f"SETTING fr encoder sim position to {self.drive_sim.get_fr_position()=}, Sim encoder position is {self.fr_spark_sim.getPosition()=} normal encoder: {self.right_front_encoder.getPosition()=}")
+        print(f"SETTING rl encoder sim position to {self.drive_sim.get_rl_position()=}, Sim encoder position is {self.rl_spark_sim.getPosition()=} normal encoder: {self.left_rear_encoder.getPosition()=}")
+        print(f"SETTING rr encoder sim position to {self.drive_sim.get_rr_position()=}, Sim encoder position is {self.rr_spark_sim.getPosition()=} normal encoder: {self.right_rear_encoder.getPosition()=}")
 
-        # Update encoders
-        # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
-        radps_to_rpm = 60 / (2 * pi)
-        conversion_factor = radps_to_rpm * self.left_front_drive.configAccessor.encoder.getVelocityConversionFactor()
-        voltage = wpilib.RobotController.getBatteryVoltage()
+        self.fl_encoder_sim.setPosition(self.drive_sim.get_fl_position())
+        self.fr_encoder_sim.setPosition(self.drive_sim.get_fr_position())
+        self.rl_encoder_sim.setPosition(self.drive_sim.get_rl_position())
+        self.rr_encoder_sim.setPosition(self.drive_sim.get_rr_position())
 
-        self.fl_motor_sim.iterate(fl_out * conversion_factor, self.battery_voltage, tm_diff)
-        self.fr_motor_sim.iterate(fr_out * conversion_factor, self.battery_voltage, tm_diff)
-        self.rl_motor_sim.iterate(rl_out * conversion_factor, self.battery_voltage, tm_diff)
-        self.rr_motor_sim.iterate(rr_out * conversion_factor, self.battery_voltage, tm_diff)
+        self.fl_encoder_sim.setVelocity(self.drive_sim.get_fl_velocity())
+        self.fr_encoder_sim.setVelocity(self.drive_sim.get_fr_velocity())
+        self.rl_encoder_sim.setVelocity(self.drive_sim.get_rl_velocity())
+        self.rr_encoder_sim.setVelocity(self.drive_sim.get_rr_velocity())
 
         # Update simulated navx gyro heading
         # We convert from rad/s to deg/frame
