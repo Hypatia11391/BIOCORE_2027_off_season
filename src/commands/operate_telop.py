@@ -1,15 +1,14 @@
-from commands2 import Command
-from wpilib import Joystick, Timer
-
 from typing import override
 
-from src.subsystems.mechanisms.intake import Intake
-from src.subsystems.mechanisms.feed import Feed
-from src.subsystems.mechanisms.kicker import Kicker
-from src.subsystems.mechanisms.shooter import Shooter
+from commands2 import Command
+from wpilib import Joystick
+
 import src.commands.operation_constants as operation_consts
 from src.buttons import Buttons
-from src.joysticks_axes import JoystickAxes
+from src.subsystems.mechanisms.feed import Feed
+from src.subsystems.mechanisms.intake import Intake
+from src.subsystems.mechanisms.kicker import Kicker
+from src.subsystems.mechanisms.shooter import Shooter
 
 
 class OperateTelop(Command):
@@ -35,60 +34,61 @@ class OperateTelop(Command):
 
     @override
     def execute(self) -> None:
-        self.update_states()
+        pass
+        # self.update_states()
 
-        match self.intake_lift_state:
-            case operation_consts.IntakeLiftState.OFF.value:
-                self.intake.set_lift_position(0)
+        # match self.intake_lift_state:
+        #     case operation_consts.IntakeLiftState.OFF.value:
+        #         self.intake.set_lift_position(0)
 
-            case operation_consts.IntakeLiftState.UP.value:
-                self.intake.set_lift_position(operation_consts.INTAKE_LIFT_POS_UP)
+        #     case operation_consts.IntakeLiftState.UP.value:
+        #         self.intake.set_lift_position(operation_consts.INTAKE_LIFT_POS_UP)
 
-            case operation_consts.IntakeLiftState.DOWN.value:
-                self.intake.set_lift_position(operation_consts.INTAKE_LIFT_POS_DOWN)
+        #     case operation_consts.IntakeLiftState.DOWN.value:
+        #         self.intake.set_lift_position(operation_consts.INTAKE_LIFT_POS_DOWN)
 
-        match self.intake_feed_state:
-            case operation_consts.IntakeFeedState.OFF.value:
-                self.intake.set_feed_speed(0)
+        # match self.intake_feed_state:
+        #     case operation_consts.IntakeFeedState.OFF.value:
+        #         self.intake.set_feed_speed(0)
 
-            case operation_consts.IntakeFeedState.IN.value:
-                self.intake.set_feed_speed(operation_consts.INTAKE_FEED_PWR)
+        #     case operation_consts.IntakeFeedState.IN.value:
+        #         self.intake.set_feed_speed(operation_consts.INTAKE_FEED_PWR)
 
-            case operation_consts.IntakeFeedState.OUT.value:
-                self.intake.set_feed_speed(-operation_consts.INTAKE_FEED_PWR)
+        #     case operation_consts.IntakeFeedState.OUT.value:
+        #         self.intake.set_feed_speed(-operation_consts.INTAKE_FEED_PWR)
 
-        rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
+        # rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
 
-        print(f"{rt_shoot=}")
-        print(f"left voltage: {self.shooter.get_left_voltage()}")
-        print(f"right voltage: {self.shooter.get_right_voltage()}")
+        # print(f"{rt_shoot=}")
+        # print(f"left voltage: {self.shooter.get_left_voltage()}")
+        # print(f"right voltage: {self.shooter.get_right_voltage()}")
 
-        if abs(rt_shoot) > 0.08:
-            left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
-            right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
+        # if abs(rt_shoot) > 0.08:
+        #     left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
+        #     right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
 
-            print("motor speeds", left_shooter_speed, right_shooter_speed)
+        #     print("motor speeds", left_shooter_speed, right_shooter_speed)
 
-            self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
+        #     self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
 
-            if self.shooter.is_at_target_rpm():
-                print("running kicker")
-                self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
-                print("running feed")
-                self.feed.set_feed_speed(operation_consts.FEED_POWER)
+        #     if self.shooter.is_at_target_rpm():
+        #         print("running kicker")
+        #         self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
+        #         print("running feed")
+        #         self.feed.set_feed_speed(operation_consts.FEED_POWER)
 
-                if self.time_at_target_speed < 0.0:
-                    self.time_at_target_speed = Timer.getFPGATimestamp()
+        #         if self.time_at_target_speed < 0.0:
+        #             self.time_at_target_speed = Timer.getFPGATimestamp()
 
-            else:
-                self.feed.stop()
-                self.kicker.stop()
-                # self.shooter.stop()
+        #     else:
+        #         self.feed.stop()
+        #         self.kicker.stop()
+        #         # self.shooter.stop()
 
-        else:
-            self.feed.stop()
-            self.kicker.stop()
-            self.shooter.stop()
+        # else:
+        #     self.feed.stop()
+        #     self.kicker.stop()
+        #     self.shooter.stop()
 
     @override
     def end(self, interrupted: bool) -> None:

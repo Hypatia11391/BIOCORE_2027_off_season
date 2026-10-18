@@ -1,6 +1,6 @@
-from rev import SparkBaseConfig, FeedbackSensor
-
 from typing import Final
+
+from rev import FeedbackSensor, SparkBaseConfig
 
 INTAKE_FEED_ID: Final[int] = 4
 INTAKE_LIFT_ID: Final[int] = 6
@@ -18,7 +18,7 @@ INTAKE_LIFT_ENCODER_POSITION_CONVERSION_FACTOR: Final[float] = 1
 INTAKE_LIFT_CLOSED_LOOP_FEEDBACK_SENSOR: Final[FeedbackSensor] = FeedbackSensor.kPrimaryEncoder
 INTAKE_LIFT_POSITION_THRESHOLD: Final[float] = 1
 
-INTAKE_LIFT_kP: Final[float] = 0.1
+INTAKE_LIFT_kP: Final[float] = 0.01
 INTAKE_LIFT_kI: Final[float] = 0
 INTAKE_LIFT_kD: Final[float] = 10
 
