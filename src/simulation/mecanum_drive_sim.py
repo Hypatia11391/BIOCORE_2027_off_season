@@ -100,6 +100,10 @@ class MecanumDriveSim:
 
         return state_derivitave_vector
 
+    def reset(self) -> None:
+        self.state = np.zeros(11)
+        self.inputs = np.zeros(4)
+
     def get_fl_position(self) -> float:
         return self.state[StateEnum.p_fl][0]
 
