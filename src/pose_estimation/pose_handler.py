@@ -42,6 +42,14 @@ class PoseHandler():
                            [T_mat[2, 3],    0, -T_mat[0,    3]         ],
                            [-T_mat[1, 3],   T_mat[0, 3],    0          ]])
 
+        J[ :3, :3] = R_mat
+        J[ :3, 3:] = t_skew * R_mat
+        J[3: , 3:] = R_mat
+
+        cov_out = J * cov_in * J.T
+
+        return cov_out
+
     def periodic(self):
         for i in range(self.pose_estimators.shape[0]):
             # Update Odometry
