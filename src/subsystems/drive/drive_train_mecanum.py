@@ -247,7 +247,7 @@ class DriveTrainMecanum(Subsystem):
         self.left_rear_drive.set(rear_left_percent * bad_negation)
         self.right_rear_drive.set(rear_right_percent * bad_negation)
 
-    def drive_from_raw_motor_set_values(self, fl_percent, fr_percent, rl_percent, rr_percent):
+    def drive_from_raw_motor_set_values(self, fl_percent: float, fr_percent: float, rl_percent: float, rr_percent: float):
         # print(f'driving from applied output {fl_percent=}')
         self.left_front_drive.set(fl_percent)
         self.right_front_drive.set(fr_percent)
@@ -314,10 +314,10 @@ class DriveTrainMecanum(Subsystem):
         )
         self.drive_sim.update(0.02)
 
-        print(f"SETTING fl encoder sim position to {self.drive_sim.get_fl_position()=}, Sim encoder position is {self.fl_spark_sim.getPosition()=} normal encoder: {self.left_front_encoder.getPosition()=}")
-        print(f"SETTING fr encoder sim position to {self.drive_sim.get_fr_position()=}, Sim encoder position is {self.fr_spark_sim.getPosition()=} normal encoder: {self.right_front_encoder.getPosition()=}")
-        print(f"SETTING rl encoder sim position to {self.drive_sim.get_rl_position()=}, Sim encoder position is {self.rl_spark_sim.getPosition()=} normal encoder: {self.left_rear_encoder.getPosition()=}")
-        print(f"SETTING rr encoder sim position to {self.drive_sim.get_rr_position()=}, Sim encoder position is {self.rr_spark_sim.getPosition()=} normal encoder: {self.right_rear_encoder.getPosition()=}")
+        # print(f"SETTING fl encoder sim position to {self.drive_sim.get_fl_position()=}, Sim encoder position is {self.fl_spark_sim.getPosition()=} normal encoder: {self.left_front_encoder.getPosition()=}")
+        # print(f"SETTING fr encoder sim position to {self.drive_sim.get_fr_position()=}, Sim encoder position is {self.fr_spark_sim.getPosition()=} normal encoder: {self.right_front_encoder.getPosition()=}")
+        # print(f"SETTING rl encoder sim position to {self.drive_sim.get_rl_position()=}, Sim encoder position is {self.rl_spark_sim.getPosition()=} normal encoder: {self.left_rear_encoder.getPosition()=}")
+        # print(f"SETTING rr encoder sim position to {self.drive_sim.get_rr_position()=}, Sim encoder position is {self.rr_spark_sim.getPosition()=} normal encoder: {self.right_rear_encoder.getPosition()=}")
 
         self.fl_encoder_sim.setPosition(self.drive_sim.get_fl_position())
         self.fr_encoder_sim.setPosition(self.drive_sim.get_fr_position())
@@ -333,6 +333,8 @@ class DriveTrainMecanum(Subsystem):
         # We convert from rad/s to deg/frame
         # wpilib is CCW positive, navx is CW positive, so we subtract
         self.navx_sim_yaw.set(self.navx_sim_yaw.get() - self.get_relative_speeds().omega * tm_diff * (180 / pi))
+
+        print(self.pose_estimator.getEstimatedPosition())
 
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()

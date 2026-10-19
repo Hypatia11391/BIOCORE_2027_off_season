@@ -58,8 +58,6 @@ class MecanumDriveSim:
         self.inputs = np.array([fl_input, fr_input, rl_input, rr_input])
         self.inputs = np.clip(self.inputs, -self.spec.max_volts, self.spec.max_volts)
 
-        print(f"{self.inputs=}")
-
     def update(self, dt: float) -> None:
         self.state = RKDP(
             lambda state, inputs: self.get_state_derivitave_vector(np.asarray(state), np.asarray(inputs)),

@@ -1,38 +1,55 @@
 import typing
+
 typing.override = lambda x: x
 
-import os
 import json
+import os
 
 import wpilib
 from commands2 import CommandScheduler
 
-from src.network_server.network_server import NetworkServer
-from src.robot_container import RobotContainer
-from src.recording.recording import Recording
 from src.commands.drive_recording import DriveRecording
+from src.network_server.network_server import NetworkServer
+from src.recording.recording import Recording
+from src.robot_container import RobotContainer
 
 
 class Robot(wpilib.TimedRobot):
     def robotInit(self):
         print("INFO: Robot initiation sequence")
-        
+
         self.robot_container = RobotContainer(self)
+
+        CommandScheduler.getInstance().schedule(
+            DriveRecording(
+                self.robot_container.drive,
+                Recording.from_jsonl_file("output.json"),
+            )
+        )
 
         self.autonomous_command = self.robot_container.get_autonomous_command()
 
-        if os.environ.get("CONSTANT_TUNING_SCRIPT")=='true':
+        if os.environ.get("CONSTANT_TUNING_SCRIPT") == "true":
             if wpilib.RobotBase.isSimulation():
                 wpilib.simulation.DriverStationSim.setAutonomous(True)
                 wpilib.simulation.DriverStationSim.setEnabled(True)
                 wpilib.simulation.DriverStationSim.notifyNewData()
-    
+
     def autonomousInit(self) -> None:
+        print("Autonomus init")
+
+        CommandScheduler.getInstance().schedule(
+            DriveRecording(
+                self.robot_container.drive,
+                Recording.from_jsonl_file("output.json"),
+            )
+        )
+
         self.autonomous_init = None
         self.autonomous_command = self.robot_container.get_autonomous_command()
 
-        CommandScheduler.getInstance().schedule(self.autonomous_command)
-        #self.autonomous_init=None
+        # CommandScheduler.getInstance().schedule(self.autonomous_command)
+        # self.autonomous_init=None
 
     def autonomousPeriodic(self) -> None:
         pass
@@ -45,11 +62,11 @@ class Robot(wpilib.TimedRobot):
         pass
 
     def testInit(self) -> None:
-        #print(f'{self.robot_container.drive.get_pose_rms()=}')
-        with open("sim_output.json", 'w') as f:
+        # print(f'{self.robot_container.drive.get_pose_rms()=}')
+        with open("sim_output.json", "w") as f:
             json.dump(self.robot_container.drive.traj, f)
         print("dumped traj to sim_output.json")
-        print('testInit happening')
+        print("testInit happening")
         recording_json_filename = os.environ.get("RECORDING_JSON", None)
         if recording_json_filename is not None:
             self.autonomous_command.cancel()
@@ -70,3 +87,11 @@ class Robot(wpilib.TimedRobot):
 
     def simulationPeriodic(self) -> None:
         pass
+
+    def run_recording(self, path: str) -> None:
+        CommandScheduler.getInstance().schedule(
+            DriveRecording(
+                self.robot_container.drive,
+                Recording.from_jsonl_file(path),
+            )
+        )
