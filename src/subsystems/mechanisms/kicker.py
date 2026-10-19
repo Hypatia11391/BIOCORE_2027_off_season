@@ -1,14 +1,17 @@
+from typing import override
+
 from commands2 import Subsystem
-from rev import SparkMax, SparkMaxConfig, SparkLowLevel, ResetMode, PersistMode
+from rev import PersistMode, ResetMode, SparkLowLevel, SparkMax, SparkMaxConfig
 
 import src.subsystems.mechanisms.kicker_constants as kicker_consts
+from src.network_server.network_server import NetworkServer
 
 
 class Kicker(Subsystem):
     def __init__(self) -> None:
         super().__init__()
 
-        self.motor = SparkMax(kicker_consts.KICKER_ID, SparkLowLevel.MotorType.kBrushless)
+        self.motor = SparkMax(kicker_consts.KICKER_ID, SparkLowLevel.MotorType.kBrushed)
 
         config = SparkMaxConfig()
         config.inverted(kicker_consts.KICKER_INVERTED)
@@ -22,12 +25,21 @@ class Kicker(Subsystem):
             PersistMode.kPersistParameters,
         )
 
+        self.power = 0
+
     def set_kicker_speed(self, speed: float) -> None:
         """
         Speed should be between -1, and 1
         """
 
+        self.power = speed
+
         self.motor.set(speed)
 
     def stop(self) -> None:
+        self.set_kicker_speed(0)
         self.motor.stopMotor()
+
+    @override
+    def periodic(self) -> None:
+        NetworkServer.getInstance().set_float("kicker-power", self.power)

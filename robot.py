@@ -1,6 +1,7 @@
 import wpilib
 from commands2 import CommandScheduler
 
+from src.network_server.network_server import NetworkServer
 from src.robot_container import RobotContainer
 
 
@@ -10,29 +11,37 @@ class Robot(wpilib.TimedRobot):
 
         self.robot_container = RobotContainer()
 
-    def autonomousInit(self):
+        self.autonomous_command = self.robot_container.get_autonomous_command()
+
+    def autonomousInit(self) -> None:
+        self.autonomous_command = self.robot_container.get_autonomous_command()
+
+        CommandScheduler.getInstance().schedule(self.autonomous_command)
+
+    def autonomousPeriodic(self) -> None:
         pass
 
-    def autonomousPeriodic(self):
+    def teleopInit(self) -> None:
+        self.autonomous_command.cancel()
+        self.robot_container.zero_pose()
+
+    def teleopPeriodic(self) -> None:
         pass
 
-    def teleopInit(self):
+    def testInit(self) -> None:
         pass
 
-    def teleopPeriodic(self):
+    def testPeriodic(self) -> None:
         pass
 
-    def testInit(self):
+    def disabledPeriodic(self) -> None:
         pass
 
-    def testPeriodic(self):
-        pass
-
-    def disabledPeriodic(self):
-        pass
-
-    def robotPeriodic(self):
+    def robotPeriodic(self) -> None:
         CommandScheduler.getInstance().run()
+        NetworkServer.getInstance().set_float("v", wpilib.RobotController.getBatteryVoltage())
 
-    def simulationPeriodic(self):
+        self.robot_container.periodic()
+
+    def simulationPeriodic(self) -> None:
         pass

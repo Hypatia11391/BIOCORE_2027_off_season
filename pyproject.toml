@@ -26,7 +26,8 @@ requires = [
     "robotpy",
     "robotpy-rev",
     "robotpy-commands-v2",
-    "robotpy-navx"
+    "robotpy-navx",
+    "robotpy-pathplannerlib"
 ]
 
 [tool.ruff]
@@ -34,4 +35,4 @@ requires = [
 line-length = 1000
 
 [tool.ruff.lint]
-ignore = ["E501"]
+ignore = ["E501", "I001"]
