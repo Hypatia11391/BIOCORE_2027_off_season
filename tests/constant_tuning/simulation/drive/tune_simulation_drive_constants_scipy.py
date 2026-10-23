@@ -1,16 +1,17 @@
 import numpy as np
 import scipy.optimize as optim
 
-from tests.constant_tuning.simulation.simulation_drive_cost import drive_cost
+from tests.constant_tuning.simulation.drive.simulation_drive_cost import drive_cost
 
 
 def tune_drive_constants(control, robot):
+    
     def cost_callback(params):
         kA, kV = np.exp(params)
         cost = drive_cost(control, robot, kA, kV)
         print(f"Ran {kA=}, {kV=}; {cost=}")
         return cost
-
+    
     result = optim.minimize(  # least_squares(
         cost_callback,
         x0=np.log([0.01, 0.1]),

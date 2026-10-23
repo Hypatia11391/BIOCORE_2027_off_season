@@ -12,20 +12,14 @@ def drive_cost(control, robot, kA=None, kV=None):
     robot.robot_container.drive.reset_encoders()
     robot.robot_container.drive.reset_pose_3d(STARTING_POSE)
     robot.robot_container.drive.robot_drive.setSafetyEnabled(False)
-    if hasattr(robot, "test_command"):
-        robot.test_command.recording.reset()
-    # control.step_timing()
-    # run_for(control, FPS, RobotState.DISABLED, time=1)
-
-    # print('pose:',robot.robot_container.drive.get_pose_2d())
-    # print('speed:',robot.robot_container.drive.get_relative_speeds())
-
+    if hasattr(robot, "test_command"): robot.test_command.recording.reset()
+    
     cost = 0
     for _ in run_for(control, FPS, RobotState.TEST, time=10, iter_=True):
-        cost += robot.robot_container.drive.get_speeds_rms(ChassisSpeeds(*robot.test_command.recording.current_frame()["chassis-speeds"])) ** 2
+        cost += robot.robot_container.drive.get_speeds_rms(ChassisSpeeds(*robot.test_command.recording.current_frame()["chassis-speeds"]))**2
         if robot.test_command.recording.is_finished():
             break
-
+    
     return cost
 
 
