@@ -35,4 +35,11 @@ requires = [
 line-length = 1000
 
 [tool.ruff.lint]
-ignore = ["E501", "I001"]
+ignore = ["E501", "I001", "W293"]
+
+[tool.yapf]
+column_limit = 1000000
+indent_blank_lines = true
+blank_line_before_nested_class_or_def = false
+split_arguments_when_comma_terminated = true
+split_before_first_argument = true
