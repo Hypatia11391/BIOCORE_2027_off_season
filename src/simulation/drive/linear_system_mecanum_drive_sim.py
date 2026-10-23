@@ -4,7 +4,7 @@ import numpy as np
 import wpilib
 from wpimath.system import LinearSystem_1_1_1
 
-from src.simulation.drive.integrative_mecanum_drive_sim_base import IntegrativeDriveSimBase
+from src.simulation.drive.integrative_drive_sim_base import IntegrativeDriveSimBase
 
 
 class LinearSystemMecanumDriveSim(IntegrativeDriveSimBase):
