@@ -26,6 +26,8 @@ from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 from src.subsystems.drive.logged_spark_max import LoggedSparkMax
 from src.simulation.drive.linear_system_mecanum_drive_sim import LinearSystemMecanumDriveSim
+from src.simulation.drive.static_friction_linear_system_mecanum_drive_sim import StaticFrictionLinearSystemMecanumDriveSim
+from src.simulation.drive.drive_sim_constants import DEFAULT_kV, DEFAULT_kA, DEFAULT_kS
 
 
 class DriveTrainMecanum(Subsystem):
@@ -109,10 +111,11 @@ class DriveTrainMecanum(Subsystem):
     def _init_simulation(self):
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
         
-        kA = float(os.environ.get('kA', None) or 1)  # volts per wheel radian/s (after gear ratio reduction)
-        kV = float(os.environ.get('kV', None) or 1)  # volts per wheel rad/s**2
+        kV = float(os.environ.get('kV', None) or DEFAULT_kV)  # volts per wheel rad/s**2
+        kA = float(os.environ.get('kA', None) or DEFAULT_kA)  # volts per wheel radian/s (after gear ratio reduction)
+        kS = float(os.environ.get('kS', None) or DEFAULT_kS)  # volts to overcome static friction
         plant = LinearSystemId.identifyVelocitySystemRadians(kV, kA)
-        self.sim = LinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4)
+        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS)
         
         self.fl_encoder_sim = rev.SparkRelativeEncoderSim(self.left_front_drive)
         self.fr_encoder_sim = rev.SparkRelativeEncoderSim(self.right_front_drive)
@@ -124,11 +127,12 @@ class DriveTrainMecanum(Subsystem):
         
         self.last_sim_time = wpilib.Timer.getFPGATimestamp()
     
-    def reset_simulation(self, kA=None, kV=None):
-        kA = float(os.environ.get('kA', None) or 1)
-        kV = float(os.environ.get('kV', None) or 1)
+    def reset_simulation(self, kV=None, kA=None, kS=None):
+        kV = kV or DEFAULT_kV
+        kV = kA or DEFAULT_kA
+        kV = kS or DEFAULT_kS
         plant = LinearSystemId.identifyVelocitySystemRadians(kV, kA)
-        self.sim = LinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4)
+        self.sim = LinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS)
         
         self.navx_sim_yaw.set(0.0)
         
@@ -257,7 +261,8 @@ class DriveTrainMecanum(Subsystem):
         # Update simulated navx gyro heading
         # We convert from rad/s to deg/frame
         # wpilib is CCW positive, navx is CW positive, so we subtract
-        self.navx_sim_yaw.set(self.navx_sim_yaw.get() - self.get_relative_speeds().omega * tm_diff * (180 / pi))
+        omega = self.kinematics.toChassisSpeeds(wheel_speeds).omega
+        self.navx_sim_yaw.set(self.navx_sim_yaw.get() - omega * tm_diff * (180 / pi))
     
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()

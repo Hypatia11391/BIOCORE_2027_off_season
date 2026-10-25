@@ -1,0 +1,3 @@
+DEFAULT_kV = 1
+DEFAULT_kA = 0.5
+DEFAULT_kS = 1
