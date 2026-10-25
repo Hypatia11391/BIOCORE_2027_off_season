@@ -1,7 +1,6 @@
 from typing import override
 import numpy as np
 
-import wpilib
 from wpimath.system import LinearSystem_1_1_1
 
 from src.simulation.drive.integrative_drive_sim_base import IntegrativeDriveSimBase
