@@ -66,6 +66,8 @@ class MecanumDriveSim:
             dt,
         )
 
+        print("UPDATING THINGY")
+
     def get_state_derivitave_vector(self, state: np.ndarray, inputs: np.ndarray) -> np.ndarray:
         assert state.shape == (11, 1), "Passed in state to get state derivitave vector is not the right shape"
         assert inputs.shape == (4, 1), "Passed in inputs to get state derivitave vector is not the right shape"
