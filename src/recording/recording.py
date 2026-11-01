@@ -26,14 +26,8 @@ class Recording:
         frame = self.data[self.i]
         return frame
     
-    def jump_to_relative_time(self, time):
-        rec_time = time + self.data[0]["time"]
-        frame = self.current_frame()
-        while frame["time"] < rec_time:
-            frame = self.next_frame()
-        if self.i >= 1 and abs(frame["time"] - rec_time) > abs(rec_time - self.prev_frame()["time"]):
-            self.i -= 1
-        return frame
+    def peek_next_frame(self):
+        return self.data[min(self.i + 1, len(self.data) - 1)]
     
     def current_frame(self):
         assert self.i >= 0
@@ -41,7 +35,21 @@ class Recording:
     
     def prev_frame(self):
         assert self.i >= 1
+        self.i -= 1
+        return self.data[self.i]
+    
+    def peek_prev_frame(self):
+        assert self.i >= 1
         return self.data[self.i - 1]
+    
+    def jump_to_relative_time(self, time):
+        rec_time = time * 1_000_000 + self.data[0]["time"]
+        frame = self.current_frame() if self.i >= 0 else None
+        while not frame or frame["time"] < rec_time:
+            frame = self.next_frame()
+        if self.i >= 1 and abs(frame["time"] - rec_time) > abs(rec_time - self.peek_prev_frame()["time"]):
+            frame = self.prev_frame()
+        return frame
     
     def reset(self):
         self.i = -1
