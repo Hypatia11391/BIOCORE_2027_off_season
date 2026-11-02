@@ -50,6 +50,11 @@ class PoseHandler():
 
         return cov_out
 
+    def get_angular_uncertainty(self, cam_id, cov_mat, pose):
+        cov_mat_out = self.transform_cov_mat(cov_mat, self.camera_poses_inv_[cam_id, :, :])
+
+        
+
     def periodic(self):
         for i in range(self.pose_estimators.shape[0]):
             # Update Odometry
@@ -63,23 +68,23 @@ class PoseHandler():
 
         self.add_new_vision_measurements()
 
-    def add_new_vision_measurements(self): # <-------------------------------------- ToDo: Fix
+    def add_new_vision_measurements(self):
         for update in self.pose_sub.readQueue():
-            # Pull info
+            # Pull data
             timestamp, camera_id, apriltag_set_number, *data = update.value # <--------------------- ToDo: Ask Luca about what the * does.
             
             # Pull and reshape pose and uncertainty data
             pose = np.array(data[:16], dtype=np.float64).reshape((4,4), order='F')  # order='F' specifies column-major order, which is how cpp Eigen library stores it by default and is therefore  how it is serialized on the raspberry pi side
-            uncertainty = np.array(data[16:], dtype=np.float64) # <------------------------ Note this will require processing to convert to propper form. Some of the code on the c++ side may be wrong for this.
-            #angle_uncertainty = 
+            uncertainty = np.array(data[16:], dtype=np.float64)
 
             # Convert pose to robot in global fram (instead of camera in global frame)
-            pose = self.camera_poses_inv_[camera_id, :, :] @ pose # <---------- check order
+            pose = self.camera_poses_inv_[camera_id, :, :] @ pose
             
+            # Input vision measurements
             self.pose_estimators[apriltag_set_number].addVisionMeasurement(
-                Pose3d.from_matrix(pose),  # Im not fully sure this is the right way to construct the pose
+                Pose3d.from_matrix(pose),
                 timestamp,
-                tuple(uncertainty[:3])+(uncertainty[3:].mean(),)  # Is mean the right operation here? ----- NO!!!!
+                tuple(uncertainty[:3])+(consts._TEMP_ANGULAR_POSE_UNCERTAINTY_VISION_,)
             )
 
     def get_pose_2d(self):
