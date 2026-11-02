@@ -43,6 +43,7 @@ class PoseHandler():
 
             # Update current poses
             self.poses[i] = self.pose_estimator[i].getEstimatedPosition()
+            print(self.poses[i]) # <----------------------------------------------Debug print
 
         self.add_new_vision_measurements()
 
