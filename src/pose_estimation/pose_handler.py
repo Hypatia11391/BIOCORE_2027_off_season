@@ -36,6 +36,7 @@ class PoseHandler():
         self.path_planner_offset = self.poses
 
     def periodic(self):
+        print("[info] periodic called")
         for i in range(self.pose_estimators.shape[0]):
             # Update Odometry
             self.pose_estimators[i].update(

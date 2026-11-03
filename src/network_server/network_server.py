@@ -7,7 +7,7 @@ from wpilib import Field2d
 class NetworkServer:
     _instance = None
 
-    def __init__(self, pose_estimator) -> None:
+    def __init__(self) -> None:
         if NetworkServer._instance is not None:
             raise RuntimeError("Use NetworkServer.getInstance() instead of the constructor.")
 
