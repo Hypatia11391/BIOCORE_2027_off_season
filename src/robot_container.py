@@ -60,8 +60,8 @@ class RobotContainer:
 
     def get_autonomous_command(self) -> Command:
         self.autonomous_command = PathPlannerAuto("Drive Forward 1m")
-        self.autonomous_command.isRunning().onTrue(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", True)))
-        self.autonomous_command.isRunning().onFalse(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", False)))
+        self.autonomous_command = self.autonomous_command.beforeStarting(lambda *args: NetworkServer.getInstance().set_bool("is-in-auto", True))
+        self.autonomous_command = self.autonomous_command.finallyDo(lambda *args: NetworkServer.getInstance().set_bool("is-in-auto", False))
 
         return self.autonomous_command
 

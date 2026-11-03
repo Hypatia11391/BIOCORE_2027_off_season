@@ -81,7 +81,7 @@ class DriveTrainMecanum(Subsystem):
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
 
-        kP = 0.5
+        kP = 0
         kI = 0
         kD = 0
 
@@ -90,9 +90,9 @@ class DriveTrainMecanum(Subsystem):
         self.rl_pid = PIDController(kP, kI, kD)
         self.rr_pid = PIDController(kP, kI, kD)
 
-        kS = 2.4
-        kV = 0.8
-        kA = 2.5
+        kS = 0.58
+        kV = 1.63
+        kA = 0.1
 
         self.fl_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
         self.fr_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
