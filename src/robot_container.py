@@ -41,7 +41,7 @@ class RobotContainer:
 #
         #self.vision_server = VisionServer(self.pose_estimator)
 #
-        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx)
+        self.drive = DriveTrainMecanum(self.navx)
 
         self.pose_handler = PoseHandler(self.drive) # <--------------------------------ToDo
 
