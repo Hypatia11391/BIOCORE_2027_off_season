@@ -128,11 +128,11 @@ class DriveTrainMecanum(Subsystem):
         self.last_sim_time = wpilib.Timer.getFPGATimestamp()
     
     def reset_simulation(self, kV=None, kA=None, kS=None):
-        kV = kV or DEFAULT_kV
-        kV = kA or DEFAULT_kA
-        kV = kS or DEFAULT_kS
+        if kV is None: kV = DEFAULT_kV
+        if kA is None: kA = DEFAULT_kA
+        if kS is None: kS = DEFAULT_kS
         plant = LinearSystemId.identifyVelocitySystemRadians(kV, kA)
-        self.sim = LinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS)
+        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS)
         
         self.navx_sim_yaw.set(0.0)
         
@@ -242,6 +242,8 @@ class DriveTrainMecanum(Subsystem):
             -self.left_rear_drive.get() * self.battery_voltage,
             -self.right_rear_drive.get() * self.battery_voltage,
         ])
+
+        # if 'nan' in f'{wheel_speeds}': assert False, wheel_speeds
         
         # Update encoders
         # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
@@ -290,6 +292,8 @@ class DriveTrainMecanum(Subsystem):
     
     def get_relative_speeds(self) -> ChassisSpeeds:
         wheel_speeds = self.get_wheel_speeds()
+        # print(f'{wheel_speeds=}')
+        # if 'nan' in f'{wheel_speeds}': assert False, wheel_speeds
         return self.kinematics.toChassisSpeeds(wheel_speeds)
     
     def get_speeds_rms(self, target_speeds: ChassisSpeeds):

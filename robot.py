@@ -28,6 +28,7 @@ class Robot(wpilib.TimedRobot):
         self.robot_container = RobotContainer(self)
         
         self.autonomous_command = self.robot_container.get_autonomous_command()
+        self.test_command = None
         
         if os.environ.get("CONSTANT_TUNING_SCRIPT") == "true":
             if wpilib.RobotBase.isSimulation():
@@ -40,7 +41,6 @@ class Robot(wpilib.TimedRobot):
         self.autonomous_command = self.robot_container.get_autonomous_command()
         
         CommandScheduler.getInstance().schedule(self.autonomous_command)
-        # self.autonomous_init=None
     
     def autonomousPeriodic(self) -> None:
         pass
@@ -53,20 +53,22 @@ class Robot(wpilib.TimedRobot):
         pass
     
     def testInit(self) -> None:
-        # print(f'{self.robot_container.drive.get_pose_rms()=}')
-        # with open("sim_output.json", 'w') as f:
-        #     json.dump(self.robot_container.drive.traj, f)
-        # print("dumped traj to sim_output.json")
-        print("testInit happening")
-        recording_json_filename = os.environ.get("RECORDING_JSON", None)
-        if recording_json_filename is not None:
+        output_file = os.environ.get("OUTPUT_FILE", None)
+        if output_file:
+            with open(output_file, 'w') as f:
+                json.dump(self.robot_container.drive.traj, f)
+            print(f"Saved output to {output_file}")
+        
+        recording_json_file = os.environ.get("RECORDING_JSON", None)
+        if recording_json_file:
             self.autonomous_command.cancel()
-            self.test_command = DriveRecording(self.robot_container.drive, Recording.from_json_file(recording_json_filename))
+            self.test_command = DriveRecording(self.robot_container.drive, Recording.from_json_file(recording_json_file))
             CommandScheduler.getInstance().schedule(self.test_command)
-        recording_jsonl_filename = os.environ.get("RECORDING_JSONL", None)
-        if recording_jsonl_filename is not None:
+        
+        recording_jsonl_file = os.environ.get("RECORDING_JSONL", None)
+        if recording_jsonl_file:
             self.autonomous_command.cancel()
-            self.test_command = DriveRecording(self.robot_container.drive, Recording.from_jsonl_file(recording_jsonl_filename))
+            self.test_command = DriveRecording(self.robot_container.drive, Recording.from_jsonl_file(recording_jsonl_file))
             CommandScheduler.getInstance().schedule(self.test_command)
     
     def testPeriodic(self) -> None:

@@ -46,9 +46,7 @@ class DriveTelop(Command):
 
     def get_controller_axis(self, axis):
         if self.controller.getAxisCount()==0 and RobotBase.isSimulation():
-            #print("no drive controller axes, using default")
-            #return 1 if axis==1 else 0
             return 0
         else:
-            return round(self.controller.getRawAxis(axis))
+            return self.controller.getRawAxis(axis)
 
