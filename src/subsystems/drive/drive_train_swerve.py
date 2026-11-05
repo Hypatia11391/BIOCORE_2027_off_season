@@ -61,7 +61,7 @@ class DriveTrainSwerve(Subsystem):
             lambda pose: self.pose_estimator.resetPose(Pose3d(pose)),
             lambda: self.kinematics.toChassisSpeeds(self.get_module_states()),
             path_planner_drive,
-            PPHolonomicDriveController(PIDConstants(0.0, 0.0, 0.0), PIDConstants(0.0, 0.0, 0.0)),
+            consts.PATH_PLANNER_DRIVE_CONTROLLER,
             config,
             lambda: DriverStation.getAlliance() == DriverStation.Alliance.kBlue,
             self,
