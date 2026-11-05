@@ -1,9 +1,12 @@
+import math
+
 from commands2 import Command, cmd, DeferredCommand
-from pathplannerlib.auto import NamedCommands, PathPlannerAuto
+from pathplannerlib.auto import NamedCommands, PathPlannerAuto, AutoBuilder
 from pathplannerlib.logging import PathPlannerLogging
+from pathplannerlib.path import PathConstraints
 from wpilib import DriverStation, Field2d, Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.geometry import Rotation2d, Translation3d
+from wpimath.geometry import Rotation2d, Translation3d, Pose2d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 from wpimath.controller import PIDController
 
@@ -74,6 +77,23 @@ class RobotContainer:
         else:
             self.autonomous_command = cmd.none()
         return self.autonomous_command
+
+    def get_drive_to_pos_command(self, target_pos: Pose2d) -> Command:
+        constraints = PathConstraints(
+            maxVelocityMps=2,
+            maxAccelerationMpsSq=1,
+            maxAngularVelocityRps=2 * math.pi,
+            maxAngularAccelerationRpsSq=math.pi,
+            nominalVoltage=12,
+        )
+
+        drive_to_pos_command = AutoBuilder.pathfindToPose(
+            target_pos,
+            constraints,
+            goal_end_vel=0,
+        )
+
+        return drive_to_pos_command
 
     def shot_possible(self, relative_target) -> bool:
         return FireCommand.calculate_rpm(relative_target).is_possible

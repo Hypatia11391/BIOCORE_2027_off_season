@@ -10,8 +10,9 @@ ANGLE_THRESHOLD = 3  # TODO: Tune
 
 
 class TurnToCommand(Command):
-    def __init__(self, target_angle: float, drive: DriveTrainMecanum, pose_estimator: MecanumDrivePoseEstimator3d, pid: PIDController):
+    def __init__(self, target_angle: float, drive: DriveTrainMecanum, pose_estimator: MecanumDrivePoseEstimator3d, pid: PIDController, manual: bool = False):
         self.target_angle = target_angle
+        self.manual = manual
 
         self.drive = drive
         self.pose_estimator = pose_estimator
@@ -19,7 +20,8 @@ class TurnToCommand(Command):
 
         self.addRequirements(self.drive)
 
-        self.pid.enableContinuousInput(-180.0, 180.0)
+        if not self.manual:
+            self.pid.enableContinuousInput(-180.0, 180.0)
 
     @override
     def initialize(self):

@@ -45,7 +45,6 @@ class Intake(Subsystem):
 
         self.feed_power = 0
 
-    # In degrees
     def set_lift_position(self, target_pos: float) -> None:
         # self.target_pos = max(intake_consts.INTAKE_LIFT_UP_POS, min(target_pos, intake_consts.INTAKE_LIFT_DOWN_POS))  # Clamp TODO: once have more accurate method of position detection add back
         self.target_pos = target_pos * ((48 * (50 / 18)) / 360) + self.init_pos
@@ -69,6 +68,9 @@ class Intake(Subsystem):
 
     def stop_feed(self) -> None:
         self.intake_feed.stop()
+
+    def get_intake_lift_pos(self) -> float:
+        return self.lift_encoder.getPosition() * 360
 
     @override
     def periodic(self) -> None:

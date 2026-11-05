@@ -2,6 +2,7 @@ from math import radians
 
 from commands2 import Subsystem
 from wpimath.geometry import Rotation2d, Rotation3d
+from wpimath.kinematics import ChassisSpeeds
 
 from navx import AHRS
 
@@ -50,6 +51,9 @@ class Navx(Subsystem):
 
     def get_angualar_velocity(self) -> float:
         return radians(self.navx.getRate())
+
+    def get_chassis_speeds(self) -> ChassisSpeeds:
+        return ChassisSpeeds(self.navx.getVelocityX(), self.navx.getVelocityY(), self.get_angualar_velocity())
 
     def periodic(self) -> None:
         if not self.zeroed and not self.is_calibrating() and self.is_connected():
