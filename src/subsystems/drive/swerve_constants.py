@@ -1,7 +1,7 @@
 from typing import Final
 
 from wpimath.geometry import Translation2d
-from wpimath.units import meters
+from wpimath.units import meters, meters_per_second
 from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
 
 FL_DRIVE_ID: Final[int] = 1
@@ -49,3 +49,5 @@ PATH_PLANNER_DRIVE_CONTROLLER: Final[PPHolonomicDriveController] = PPHolonomicDr
     PIDConstants(0.0, 0.0, 0.0),
     PIDConstants(0.0, 0.0, 0.0),
 )
+
+MAX_LINEAR_SPEEDS: Final[meters_per_second] = 1

@@ -1,10 +1,10 @@
 from math import pi
 
 from wpimath.geometry import Rotation2d
-from wpimath.kinematics import SwerveModuleState
+from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from phoenix6.hardware import TalonFX, CANcoder
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
-from phoenix6.signals import NeutralModeValue
+from phoenix6.signals import NeutralModeValue, FeedbackSensorSourceValue
 from phoenix6.controls import VelocityVoltage, PositionVoltage
 
 import src.subsystems.drive.swerve_constants as consts
@@ -30,6 +30,7 @@ class SwerveModule:
         self.turn_position_requester = PositionVoltage(0.0)
         
         self.drive_velocity_signal = self.drive_motor.get_velocity()
+        self.drive_position_signal = self.drive_motor.get_position()
         self.turn_position_signal = self.turn_motor.get_position()
     
     def setDesiredState(self, desired_state: SwerveModuleState) -> None:
@@ -64,8 +65,10 @@ class SwerveModule:
         turn_config = TalonFXConfiguration()
         
         turn_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
-        turn_config.feedback.sensor_to_mechanism_ratio = consts.TURN_GEAR_RATIO
+        turn_config.feedback.rotor_to_sensor_ratio = consts.TURN_GEAR_RATIO
+        turn_config.closed_loop_general.continuous_wrap = True
         turn_config.feedback.feedback_remote_sensor_id = self.cancoder.device_id
+        turn_config.feedback.feedback_sensor_source = FeedbackSensorSourceValue.REMOTE_CANCODER
         
         turn_config.slot0.k_p = consts.TURN_K_P
         turn_config.slot0.k_i = consts.TURN_K_I
@@ -82,3 +85,9 @@ class SwerveModule:
         self.turn_position_signal.refresh(report_error=True)
         
         return SwerveModuleState(self.drive_velocity_signal.value, Rotation2d.fromRotations(self.turn_position_signal.value))
+    
+    def get_position(self) -> SwerveModulePosition:
+        self.drive_position_signal.refresh(report_error=True)
+        self.turn_position_signal.refresh(report_error=True)
+        
+        return SwerveModulePosition(self.drive_position_signal.value, Rotation2d.fromRotations(self.turn_position_signal.value))

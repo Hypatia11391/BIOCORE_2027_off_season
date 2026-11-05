@@ -1,20 +1,23 @@
 import src.subsystems.drive.swerve_constants as consts
 from src.subsystems.drive.swerve_module import SwerveModule
+from src.navx.navx import Navx
 
-from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModuleState
-from wpimath.geometry import Rotation2d, Pose3d
+from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModuleState, SwerveModulePosition
+from wpimath.geometry import Pose3d
 from wpimath.estimator import SwerveDrive4PoseEstimator3d
 from commands2 import Subsystem
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import RobotConfig
-from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
 from pathplannerlib.util import DriveFeedforwards
 from wpilib import DriverStation
 
+from typing import override
+
 
 class DriveTrainSwerve(Subsystem):
-    def __init__(self, pose_estimator: SwerveDrive4PoseEstimator3d) -> None:
+    def __init__(self, pose_estimator: SwerveDrive4PoseEstimator3d, navx: Navx) -> None:
         self.pose_estimator = pose_estimator
+        self.navx = navx
         
         self.fl_module = SwerveModule(
             consts.FL_DRIVE_ID,
@@ -74,12 +77,13 @@ class DriveTrainSwerve(Subsystem):
                 self.pose_estimator.getEstimatedPosition().rotation().toRotation2d(),
             )
         
-        moduleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
+        module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
+        self.kinematics.desaturateWheelSpeeds(module_states, consts.MAX_LINEAR_SPEEDS)
         
-        self.fl_module.setDesiredState(moduleStates[0])
-        self.fr_module.setDesiredState(moduleStates[1])
-        self.rl_module.setDesiredState(moduleStates[2])
-        self.rr_module.setDesiredState(moduleStates[3])
+        self.fl_module.setDesiredState(module_states[0])
+        self.fr_module.setDesiredState(module_states[1])
+        self.rl_module.setDesiredState(module_states[2])
+        self.rr_module.setDesiredState(module_states[3])
     
     def get_module_states(self) -> tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState]:
         return (
@@ -88,3 +92,15 @@ class DriveTrainSwerve(Subsystem):
             self.rl_module.get_state(),
             self.rr_module.get_state(),
         )
+    
+    def get_module_positions(self) -> tuple[SwerveModulePosition, SwerveModulePosition, SwerveModulePosition, SwerveModulePosition]:
+        return (
+            self.fl_module.get_position(),
+            self.fr_module.get_position(),
+            self.rl_module.get_position(),
+            self.rr_module.get_position(),
+        )
+    
+    @override
+    def periodic(self) -> None:
+        self.pose_estimator.update(self.navx.get_full_rotation(), self.get_module_positions())
