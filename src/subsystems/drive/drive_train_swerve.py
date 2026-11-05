@@ -1,65 +1,90 @@
-import subsystems.drive.drive_train_constants as constants
-from subsystems.drive.swerve_module import SwerveModule
+import src.subsystems.drive.swerve_constants as consts
+from src.subsystems.drive.swerve_module import SwerveModule
 
-from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
+from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModuleState
+from wpimath.geometry import Rotation2d, Pose3d
+from wpimath.estimator import SwerveDrive4PoseEstimator3d
 from commands2 import Subsystem
+from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.config import RobotConfig
+from pathplannerlib.controller import PIDConstants, PPHolonomicDriveController
+from pathplannerlib.util import DriveFeedforwards
+from wpilib import DriverStation
 
 
 class DriveTrainSwerve(Subsystem):
-    def __init__(self) -> None:
-        self.swerve_module_front_left = SwerveModule(
-            constants.DRIVE_MOTOR_CHANNEL_FRONT_LEFT,
-            constants.TURNING_MOTOR_CHANNEL_FRONT_LEFT,
-            constants.DRIVE_ENCODER_CHANNEL_A_FRONT_LEFT,
-            constants.DRIVE_ENCODER_CHANNEL_B_FRONT_LEFT,
-            constants.TURNING_ENCODER_CHANNEL_A_FRONT_LEFT,
-            constants.TURNING_ENCODER_CHANNEL_B_FRONT_LEFT,
+    def __init__(self, pose_estimator: SwerveDrive4PoseEstimator3d) -> None:
+        self.pose_estimator = pose_estimator
+        
+        self.fl_module = SwerveModule(
+            consts.FL_DRIVE_ID,
+            consts.FL_TURN_ID,
+            consts.FL_CANCODER_ID,
+            0,  # TODO: shouldn't be zero figure out how to get
         )
-
-        self.swerve_module_front_right = SwerveModule(
-            constants.DRIVE_MOTOR_CHANNEL_FRONT_RIGHT,
-            constants.TURNING_MOTOR_CHANNEL_FRONT_RIGHT,
-            constants.DRIVE_ENCODER_CHANNEL_A_FRONT_RIGHT,
-            constants.DRIVE_ENCODER_CHANNEL_B_FRONT_RIGHT,
-            constants.TURNING_ENCODER_CHANNEL_A_FRONT_RIGHT,
-            constants.TURNING_ENCODER_CHANNEL_B_FRONT_RIGHT,
+        
+        self.fr_module = SwerveModule(
+            consts.FR_DRIVE_ID,
+            consts.FR_TURN_ID,
+            consts.FR_CANCODER_ID,
+            0,
         )
-
-        self.swerve_module_rear_left = SwerveModule(
-            constants.DRIVE_MOTOR_CHANNEL_REAR_LEFT,
-            constants.TURNING_MOTOR_CHANNEL_REAR_LEFT,
-            constants.DRIVE_ENCODER_CHANNEL_A_REAR_LEFT,
-            constants.DRIVE_ENCODER_CHANNEL_B_REAR_LEFT,
-            constants.TURNING_ENCODER_CHANNEL_A_REAR_LEFT,
-            constants.TURNING_ENCODER_CHANNEL_B_REAR_LEFT,
+        
+        self.rl_module = SwerveModule(
+            consts.RL_DRIVE_ID,
+            consts.RL_TURN_ID,
+            consts.RL_CANCODER_ID,
+            0,
         )
-
-        self.swerve_module_rear_right = SwerveModule(
-            constants.DRIVE_MOTOR_CHANNEL_REAR_RIGHT,
-            constants.TURNING_MOTOR_CHANNEL_REAR_RIGHT,
-            constants.DRIVE_ENCODER_CHANNEL_A_REAR_RIGHT,
-            constants.DRIVE_ENCODER_CHANNEL_B_REAR_RIGHT,
-            constants.TURNING_ENCODER_CHANNEL_A_REAR_RIGHT,
-            constants.TURNING_ENCODER_CHANNEL_B_REAR_RIGHT,
+        
+        self.rr_module = SwerveModule(
+            consts.RR_DRIVE_ID,
+            consts.RR_TURN_ID,
+            consts.RR_CANCODER_ID,
+            0,
         )
-
+        
         self.kinematics = SwerveDrive4Kinematics(
-            constants.FRONT_LEFT_LOCATION,
-            constants.FRONT_RIGHT_LOCATION,
-            constants.REAR_LEFT_LOCATION,
-            constants.REAR_RIGHT_LOCATION,
+            consts.FL_LOCATION,
+            consts.FR_LOCATION,
+            consts.RL_LOCATION,
+            consts.RR_LOCATION,
         )
-
-    def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
-        chassis_speeds = ChassisSpeeds(forward_speed, strafe_speed, turn_speed)
-
-        # discretized_speeds = ChassisSpeeds.discretize(chassis_speeds, period_seconds)
-
+        
+        config = RobotConfig.fromGUISettings()
+        
+        def path_planner_drive(chassis_speeds: ChassisSpeeds, drive_feedforwards: DriveFeedforwards):
+            self.drive(chassis_speeds)  # NOTE: In the future if use pathplanner to run choreo paths, might be good to also use feedforwards because choreo outputs target force vectors so chassis speeds is just a conversion kind of
+        
+        AutoBuilder.configure(
+            lambda: self.pose_estimator.getEstimatedPosition().toPose2d(),
+            lambda pose: self.pose_estimator.resetPose(Pose3d(pose)),
+            lambda: self.kinematics.toChassisSpeeds(self.get_module_states()),
+            path_planner_drive,
+            PPHolonomicDriveController(PIDConstants(0.0, 0.0, 0.0), PIDConstants(0.0, 0.0, 0.0)),
+            config,
+            lambda: DriverStation.getAlliance() == DriverStation.Alliance.kBlue,
+            self,
+        )
+    
+    def drive(self, chassis_speeds: ChassisSpeeds, field_relative=False) -> None:
+        if field_relative:
+            chassis_speeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+                chassis_speeds,
+                self.pose_estimator.getEstimatedPosition().rotation().toRotation2d(),
+            )
+        
         moduleStates = self.kinematics.toSwerveModuleStates(chassis_speeds)
-
-        SwerveDrive4Kinematics.desaturateWheelSpeeds(moduleStates, constants.MAX_VELOCITY)
-
-        self.swerve_module_front_left.setDesiredState(moduleStates[0])
-        self.swerve_module_front_right.setDesiredState(moduleStates[1])
-        self.swerve_module_rear_left.setDesiredState(moduleStates[2])
-        self.swerve_module_rear_right.setDesiredState(moduleStates[3])
+        
+        self.fl_module.setDesiredState(moduleStates[0])
+        self.fr_module.setDesiredState(moduleStates[1])
+        self.rl_module.setDesiredState(moduleStates[2])
+        self.rr_module.setDesiredState(moduleStates[3])
+    
+    def get_module_states(self) -> tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState]:
+        return (
+            self.fl_module.get_state(),
+            self.fr_module.get_state(),
+            self.rl_module.get_state(),
+            self.rr_module.get_state(),
+        )

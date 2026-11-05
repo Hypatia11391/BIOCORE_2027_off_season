@@ -1,73 +1,84 @@
-import subsystems.drive.drive_train_constants as constants
+from math import pi
 
-from wpimath.controller import PIDController, ProfiledPIDController, SimpleMotorFeedforwardMeters, SimpleMotorFeedforwardRadians
-from wpimath.trajectory import TrapezoidProfile
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModuleState
-from wpilib import Encoder
-import rev
+from phoenix6.hardware import TalonFX, CANcoder
+from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration
+from phoenix6.signals import NeutralModeValue
+from phoenix6.controls import VelocityVoltage, PositionVoltage
 
-from math import pi
+import src.subsystems.drive.swerve_constants as consts
 
 
 class SwerveModule:
-    def __init__(
-        self,
-        drive_motor_channel: int,
-        turning_motor_channel: int,
-        drive_encoder_channel_a: int,
-        drive_encoder_channel_b: int,
-        turning_encoder_channel_a: int,
-        turning_encoder_channel_b: int,
-    ):
+    def __init__(self, drive_id: int, turn_id: int, cancoder_id: int, cancoder_offset: float):
         # self.drive_motor_channel = drive_motor_channel
         # self.turning_motor_channel = turning_motor_channel
         # self.drive_encoder_channel_a = drive_encoder_channel_a
         # self.drive_encoder_channel_b = drive_encoder_channel_b
         # self.turning_encoder_channel_a = turning_encoder_channel_a
         # self.turning_encoder_channel_b = turning_encoder_channel_b
-
-        self.drive_PID_controller = PIDController(1, 0, 0)
-
-        self.turning_PID_controller = ProfiledPIDController(
-            1,
-            0,
-            0,
-            TrapezoidProfile.Constraints(
-                constants.MAX_ANGULAR_VELOCITY,
-                constants.MAX_ANGULAR_ACCELERATION,
-            ),
-        )
-
-        self.drive_feed_forward = SimpleMotorFeedforwardMeters(1, 3)
-        self.turn_feed_forward = SimpleMotorFeedforwardRadians(1, 0.5)
-
-        self.drive_motor = rev.SparkMax(drive_motor_channel, rev.SparkLowLevel.MotorType.kBrushless)
-        self.turning_motor = rev.SparkMax(turning_motor_channel, rev.SparkLowLevel.MotorType.kBrushless)
-
-        self.drive_encoder = Encoder(drive_encoder_channel_a, drive_encoder_channel_b)
-        self.turning_encoder = Encoder(turning_encoder_channel_a, turning_encoder_channel_b)
-
-        self.turning_PID_controller.enableContinuousInput(-pi, pi)
-
+        
+        self.drive_motor = TalonFX(drive_id)
+        self.turn_motor = TalonFX(turn_id)
+        
+        self.cancoder = CANcoder(cancoder_id)
+        
+        self.config_motors(cancoder_offset)
+        
+        self.drive_velocity_requester = VelocityVoltage(0.0)
+        self.turn_position_requester = PositionVoltage(0.0)
+        
+        self.drive_velocity_signal = self.drive_motor.get_velocity()
+        self.turn_position_signal = self.turn_motor.get_position()
+    
     def setDesiredState(self, desired_state: SwerveModuleState) -> None:
-        encoder_rotation = Rotation2d(self.turning_encoder.getDistance())
-
-        desired_state.optimize(encoder_rotation)
-
-        desired_state.cosineScale(encoder_rotation)
-
-        # Voltage
-        drive_output = self.drive_PID_controller.calculate(self.drive_encoder.getRate(), desired_state.speed)
-
-        # Voltage
-        drive_feed_forward = self.drive_feed_forward.calculate(desired_state.speed)
-
-        # Voltage
-        turn_output = self.turning_PID_controller.calculate(self.turning_encoder.getDistance(), desired_state.angle.radians())
-
-        # Voltage
-        turn_feed_forward = self.turn_feed_forward.calculate(self.turning_PID_controller.getSetpoint().velocity)
-
-        self.drive_motor.setVoltage(drive_output + drive_feed_forward)
-        self.turning_motor.setVoltage(turn_output + turn_feed_forward)
+        self.turn_position_signal.refresh(report_error=True)
+        
+        desired_state.optimize(Rotation2d.fromRotations(self.turn_position_signal.value))
+        
+        self.drive_motor.set_control(self.drive_velocity_requester.with_velocity(desired_state.speed))
+        self.turn_motor.set_control(self.turn_position_requester.with_position(desired_state.angle.radians() / (2.0 * pi)))
+    
+    def config_motors(self, cancoder_offset: float) -> None:
+        cancoder_config = CANcoderConfiguration()  # TODO: might need more config, cw vs ccw and sensor range
+        cancoder_config.magnet_sensor.magnet_offset = cancoder_offset
+        
+        self.cancoder.configurator.apply(cancoder_config)
+        
+        drive_config = TalonFXConfiguration()
+        
+        drive_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
+        drive_config.feedback.sensor_to_mechanism_ratio = consts.DRIVE_GEAR_RATIO / (2.0 * pi * consts.WHEEL_RADIUS)
+        
+        drive_config.slot0.k_p = consts.DRIVE_K_P
+        drive_config.slot0.k_i = consts.DRIVE_K_I
+        drive_config.slot0.k_d = consts.DRIVE_K_D
+        
+        drive_config.slot0.k_s = consts.DRIVE_K_S
+        drive_config.slot0.k_v = consts.DRIVE_K_V
+        drive_config.slot0.k_a = consts.DRIVE_K_A
+        
+        self.drive_motor.configurator.apply(drive_config)
+        
+        turn_config = TalonFXConfiguration()
+        
+        turn_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
+        turn_config.feedback.sensor_to_mechanism_ratio = consts.TURN_GEAR_RATIO
+        turn_config.feedback.feedback_remote_sensor_id = self.cancoder.device_id
+        
+        turn_config.slot0.k_p = consts.TURN_K_P
+        turn_config.slot0.k_i = consts.TURN_K_I
+        turn_config.slot0.k_d = consts.TURN_K_D
+        
+        turn_config.slot0.k_s = consts.TURN_K_S
+        turn_config.slot0.k_v = consts.TURN_K_V
+        turn_config.slot0.k_a = consts.TURN_K_A
+        
+        self.turn_motor.configurator.apply(turn_config)
+    
+    def get_state(self) -> SwerveModuleState:
+        self.drive_velocity_signal.refresh(report_error=True)
+        self.turn_position_signal.refresh(report_error=True)
+        
+        return SwerveModuleState(self.drive_velocity_signal.value, Rotation2d.fromRotations(self.turn_position_signal.value))
