@@ -11,13 +11,12 @@ from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.geometry import Pose2d, Pose3d
 from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
 
-from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_constants import FRONT_LEFT_ID, FRONT_LEFT_LOCATION, FRONT_RIGHT_ID, FRONT_RIGHT_LOCATION, MAX_SPEED, REAR_LEFT_ID, REAR_LEFT_LOCATION, REAR_RIGHT_ID, REAR_RIGHT_LOCATION, WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO
 
 
 class DriveTrainMecanum(Subsystem):
-    def __init__(self, navx: Navx) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
         self.left_front_drive = rev.SparkMax(FRONT_LEFT_ID, rev.SparkLowLevel.MotorType.kBrushless)
@@ -25,7 +24,7 @@ class DriveTrainMecanum(Subsystem):
         self.left_rear_drive = rev.SparkMax(REAR_LEFT_ID, rev.SparkLowLevel.MotorType.kBrushless)
         self.right_rear_drive = rev.SparkMax(REAR_RIGHT_ID, rev.SparkLowLevel.MotorType.kBrushless)
 
-        config = rev.SparkMaxConfig()
+        #config = rev.SparkMaxConfig()
 
         self.config_drive_motor(self.left_front_drive, True)
         self.config_drive_motor(self.right_front_drive, False)
@@ -44,9 +43,6 @@ class DriveTrainMecanum(Subsystem):
             self.right_rear_drive,
         )
 
-        #self.pose_estimator = pose_estimator
-        #self.navx = navx
-
         self.kinematics = MecanumDriveKinematics(
             FRONT_LEFT_LOCATION,
             FRONT_RIGHT_LOCATION,
@@ -54,21 +50,21 @@ class DriveTrainMecanum(Subsystem):
             REAR_RIGHT_LOCATION,
         )
 
-        config = RobotConfig.fromGUISettings()
+        #config = RobotConfig.fromGUISettings()
 
-        AutoBuilder.configure(
-            self.get_pose_2d,
-            self.reset_pose_2d,
-            self.get_relative_speeds,
-            lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
-            PPHolonomicDriveController(PIDConstants(0.3984375, 0.0, 0.005), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
-            config,
-            self.should_flip_path,
-            self,
-        )
+        #AutoBuilder.configure(
+        #    self.get_pose_2d,
+        #    self.reset_pose_2d,
+        #    self.get_relative_speeds,
+        #    lambda speeds, feedforwards: self.drive_from_chassis_speeds(speeds),
+        #    PPHolonomicDriveController(PIDConstants(0.3984375, 0.0, 0.005), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
+        #    config,
+        #    self.should_flip_path,
+        #    self,
+        #)
 
-    def should_flip_path(self) -> bool:
-        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
+    #def should_flip_path(self) -> bool:
+    #    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         # clamp = 0.25
@@ -79,8 +75,8 @@ class DriveTrainMecanum(Subsystem):
 
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
 
-    def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
-        self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation()) # <----------------- ToDo: Switch to Pose_Handler
+    #def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
+    #    self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation()) # <----------------- ToDo: Switch to Pose_Handler
 
     def drive_from_chassis_speeds(self, speeds: ChassisSpeeds) -> None:
         # forward_speed = speeds.vx
@@ -98,8 +94,8 @@ class DriveTrainMecanum(Subsystem):
         NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
         NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
 
-        print(f"{self.navx.get_angualar_velocity()=}")
-        print(f"{speeds.omega=}")
+        #print(f"{self.navx.get_angualar_velocity()=}")
+        #print(f"{speeds.omega=}")
 
         wheel_speeds = self.kinematics.toWheelSpeeds(speeds)
 
@@ -138,11 +134,11 @@ class DriveTrainMecanum(Subsystem):
 
         return positions
 
-    def zero_encoder_positions(self) -> None:
-        self.left_front_encoder.setPosition(0)
-        self.right_front_encoder.setPosition(0)
-        self.left_rear_encoder.setPosition(0)
-        self.right_rear_encoder.setPosition(0)
+    #def zero_encoder_positions(self) -> None:
+    #    self.left_front_encoder.setPosition(0)
+    #    self.right_front_encoder.setPosition(0)
+    #    self.left_rear_encoder.setPosition(0)
+    #    self.right_rear_encoder.setPosition(0)
 
     def get_wheel_speeds(self) -> MecanumDriveWheelSpeeds:
         return MecanumDriveWheelSpeeds(
@@ -155,17 +151,17 @@ class DriveTrainMecanum(Subsystem):
     def get_relative_speeds(self) -> ChassisSpeeds:
         return self.kinematics.toChassisSpeeds(self.get_wheel_speeds())
 
-    def get_pose_2d(self) -> Pose2d:
-        return self.pose_estimator.getEstimatedPosition().toPose2d()
-
-    def get_pose_3d(self) -> Pose3d:
-        return self.pose_estimator.getEstimatedPosition()
-
-    def reset_pose_2d(self, pose: Pose2d) -> None:
-        self.pose_estimator.resetPose(Pose3d(pose))
-
-    def reset_pose_3d(self, pose: Pose3d) -> None:
-        self.pose_estimator.resetPose(pose)
+    #def get_pose_2d(self) -> Pose2d:
+    #    return self.pose_estimator.getEstimatedPosition().toPose2d()
+#
+    #def get_pose_3d(self) -> Pose3d:
+    #    return self.pose_estimator.getEstimatedPosition()
+#
+    #def reset_pose_2d(self, pose: Pose2d) -> None:
+    #    self.pose_estimator.resetPose(Pose3d(pose))
+#
+    #def reset_pose_3d(self, pose: Pose3d) -> None:
+    #    self.pose_estimator.resetPose(pose)
 
     def config_drive_motor(self, motor: rev.SparkMax, inverted: bool) -> None:
         config = rev.SparkMaxConfig()

@@ -7,7 +7,7 @@ from wpimath.geometry import Rotation2d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
 #import src.subsystems
-from pose_estimation.pose_handler import PoseHandler
+from src.pose_estimation.pose_handler import PoseHandler
 import src.constants as consts
 import src.subsystems.drive.drive_train_constants as drive_consts
 from src.commands.drive_telop import DriveTelop
@@ -41,7 +41,7 @@ class RobotContainer:
 #
         #self.vision_server = VisionServer(self.pose_estimator)
 #
-        self.drive = DriveTrainMecanum(self.navx)
+        self.drive = DriveTrainMecanum()
 
         self.pose_handler = PoseHandler(self.drive) # <--------------------------------ToDo
 
@@ -75,13 +75,15 @@ class RobotContainer:
             self.autonomous_command = Command()
         return self.autonomous_command
 
-    def zero_pose(self) -> None:
-        self.pose_estimator.resetPose(consts.STARTING_POSE)
-        self.navx.zero_yaw()
-        self.drive.zero_encoder_positions()
+    #def zero_pose(self) -> None:
+    #    self.pose_estimator.resetPose(consts.STARTING_POSE)
+    #    self.navx.zero_yaw()
+    #    self.drive.zero_encoder_positions()
 
     def periodic(self) -> None:
-        self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
+        self.pose_handler.periodic()
+
+        self.field.setRobotPose(self.pose_handler.get_pose_2d(0))
         self.field.getObject("velocity").setPose(
             self.drive.get_relative_speeds().vx,
             self.drive.get_relative_speeds().vy,

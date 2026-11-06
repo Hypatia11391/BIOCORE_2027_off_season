@@ -31,7 +31,9 @@ class PoseHandler():
             if self.pose_estimators == None:
                 self.pose_estimators = np.array([single_pose_estimator])
             else:
-                np.append(self.pose_estimators, single_pose_estimator)
+                self.pose_estimators = np.append(self.pose_estimators, single_pose_estimator)
+
+        self.path_planner_offset = self.poses
 
     def periodic(self):
         for i in range(self.pose_estimators.shape[0]):
@@ -51,6 +53,8 @@ class PoseHandler():
         for update in self.pose_sub.readQueue():
             # Pull info
             timestamp, camera_id, apriltag_set_number, *data = update.value # <--------------------- ToDo: Ask Luca about what the * does.
+            camera_id = int(camera_id)
+            apriltag_set_number = int(apriltag_set_number)
             
             # Pull and reshape pose and uncertainty data
             pose = np.array(data[:16], dtype=np.float64).reshape((4,4), order='F')  # order='F' specifies column-major order, which is how cpp Eigen library stores it by default and is therefore  how it is serialized on the raspberry pi side
@@ -66,8 +70,15 @@ class PoseHandler():
                 tuple(uncertainty[:3])+(consts._TEMP_ANGULAR_POSE_UNCERTAINTY_VISION_,)
             )
 
-    def get_pose_2d(self):
-        return self.pose_estimator.getEstimatedPosition().toPose2d()
+    def reset_pose_offset(self):
+        self.path_planner_offset = self.poses
 
-    def get_pose_3d(self):
-        return self.pose_estimator.getEstimatedPosition()
+    def get_pose_2d(self, frame_id):
+        return self.poses[frame_id].toPose2d()
+
+    def get_pose_3d(self, frame_id):
+        return self.poses[frame_id]
+    
+    def get_pathplanner_pose_2d(self, frame_id):
+        path_planner_pose_3d = self.poses[frame_id].relative_to(self.path_planner_offset)
+        return path_planner_pose_3d.toPose2d()
