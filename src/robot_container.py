@@ -42,7 +42,6 @@ class RobotContainer:
         #self.vision_server = VisionServer(self.pose_estimator)
 #
         self.drive = DriveTrainMecanum()
-
         self.pose_handler = PoseHandler(self.drive) # <--------------------------------ToDo
 
         self.intake = Intake()
@@ -61,6 +60,7 @@ class RobotContainer:
         self.field = Field2d()
 
         self.autonomous_command = Command()
+        # <------------------------------------- todo: is this a good spot to configure autos?
 
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
 

@@ -12,7 +12,7 @@ class PoseHandler():
     _instance = None
 
     def __init__(self, drive):
-        self.camera_poses_inv_ = consts.ROBOT_POSES_IN_CAMERA
+        self.robot_poses_in_camera = consts.ROBOT_POSES_IN_CAMERA
 
         self.poses = np.array([Pose3d(), Pose3d(), Pose3d()])
 
@@ -61,7 +61,7 @@ class PoseHandler():
             uncertainty = np.array(data[16:], dtype=np.float64)
 
             # Convert pose to robot in global fram (instead of camera in global frame)
-            pose = self.camera_poses_inv_[camera_id, :, :] @ pose
+            pose = self.robot_poses_in_camera[camera_id, :, :] @ pose
             
             # Input vision measurements
             self.pose_estimators[apriltag_set_number].addVisionMeasurement(
