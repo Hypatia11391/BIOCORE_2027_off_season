@@ -69,7 +69,7 @@ class DriveTrainMecanum(Subsystem):
             self.reset_pose_2d,
             self.get_relative_speeds,
             path_planner_drive,
-            PPHolonomicDriveController(PIDConstants(0.0, 0.0, 0.0), PIDConstants(0.0, 0.0, 0.0)),  # PIDConstants(0.03, 0.0, 0.022)),
+            PPHolonomicDriveController(PIDConstants(0.0, 0.0, 0.0), PIDConstants(0.0, 0.0, 0.0)),
             config,
             self.should_flip_path,
             self,
@@ -81,9 +81,9 @@ class DriveTrainMecanum(Subsystem):
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
 
-        kP = 0
-        kI = 0
-        kD = 0
+        kP = 0.01
+        kI = 0.005
+        kD = 0.05
         
         self.fl_pid = PIDController(kP, kI, kD)
         self.fr_pid = PIDController(kP, kI, kD)
@@ -152,11 +152,25 @@ class DriveTrainMecanum(Subsystem):
         fr_pid_volts = self.fr_pid.calculate(self.right_front_encoder.getVelocity(), wheel_speeds.frontRight)
         rl_pid_volts = self.rl_pid.calculate(self.left_rear_encoder.getVelocity(), wheel_speeds.rearLeft)
         rr_pid_volts = self.rr_pid.calculate(self.right_rear_encoder.getVelocity(), wheel_speeds.rearRight)
+
+        current_speeds = self.get_wheel_speeds()
         
-        fl_feed_forward_volts = self.fl_feed_forward.calculate(wheel_speeds.frontLeft)
-        fr_feed_forward_volts = self.fr_feed_forward.calculate(wheel_speeds.frontRight)
-        rl_feed_forward_volts = self.rl_feed_forward.calculate(wheel_speeds.rearLeft)
-        rr_feed_forward_volts = self.rr_feed_forward.calculate(wheel_speeds.rearRight)
+        fl_feed_forward_volts = self.fl_feed_forward.calculate(
+            current_speeds.frontLeft, 
+            wheel_speeds.frontLeft,
+        )
+        fr_feed_forward_volts = self.fr_feed_forward.calculate(
+            current_speeds.frontRight, 
+            wheel_speeds.frontRight,
+        )
+        rl_feed_forward_volts = self.rl_feed_forward.calculate(
+            current_speeds.rearLeft, 
+            wheel_speeds.rearLeft,
+        )
+        rr_feed_forward_volts = self.rr_feed_forward.calculate(
+            current_speeds.rearRight, 
+            wheel_speeds.rearRight,
+        )
         
         self.left_front_drive.setVoltage(fl_feed_forward_volts + fl_pid_volts)
         self.right_front_drive.setVoltage(fr_feed_forward_volts + fr_pid_volts)
