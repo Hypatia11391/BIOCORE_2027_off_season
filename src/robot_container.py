@@ -59,11 +59,6 @@ class RobotContainer:
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
 
     def get_autonomous_command(self) -> Command:
-        self.autonomous_command = PathPlannerAuto("Turn 90 Clockwise")
-        self.autonomous_command = self.autonomous_command.beforeStarting(lambda *args: (NetworkServer.getInstance().set_bool("is-in-auto", True), print("SET IS IN AUTO to true\n\n\n\n\n\n")))
-        self.autonomous_command = self.autonomous_command.finallyDo(lambda *args: (NetworkServer.getInstance().set_bool("is-in-auto", False), print("SET IS IN AUTO to false\n\n\n\n\n\n")))
-
-        return self.autonomous_command
 
         command_str = NetworkServer.getInstance().get_string("selected-auto")
 
@@ -71,8 +66,8 @@ class RobotContainer:
 
         if command_str != "":
             self.autonomous_command = PathPlannerAuto(command_str)
-            self.autonomous_command.isRunning().onTrue(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", True)))
-            self.autonomous_command.isRunning().onFalse(runOnce(lambda: NetworkServer.getInstance().set_bool("is-in-auto", False)))
+            self.autonomous_command = self.autonomous_command.beforeStarting(lambda *args: NetworkServer.getInstance().set_bool("is-in-auto", True))
+            self.autonomous_command = self.autonomous_command.finallyDo(lambda *args: NetworkServer.getInstance().set_bool("is-in-auto", False))
         else:
             self.autonomous_command = Command()
 
