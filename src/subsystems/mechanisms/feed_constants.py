@@ -8,3 +8,4 @@ FEED_INVERTED: Final[bool] = False
 FEED_IDLE_MODE: Final[SparkBaseConfig.IdleMode] = SparkBaseConfig.IdleMode.kCoast
 FEED_SMART_LIMIT: Final[int] = 40
 FEED_VOLTAGE_COMPENSATION: Final[float] = 12
+FEED_MAX_SPEED: Final[float] = 40  # rpm

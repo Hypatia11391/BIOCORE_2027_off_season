@@ -1,7 +1,11 @@
 from typing import override
+from math import pi
 
+import wpilib
 from commands2 import Subsystem
-from rev import SparkLowLevel, SparkMaxConfig
+from rev import SparkLowLevel, SparkMaxConfig, SparkMaxSim
+from wpimath.system.plant import LinearSystemId, DCMotor
+from wpilib.simulation import LinearSystemSim_1_1_1
 
 import src.subsystems.mechanisms.intake_constants as intake_consts
 from src.network_server.network_server import NetworkServer
@@ -11,10 +15,10 @@ from src.subsystems.abstract_controllers.position_controller_1d import Controlle
 class Intake(Subsystem):
     def __init__(self) -> None:
         super().__init__()
-
+        
         self.intake_lift = Controller1d(intake_consts.INTAKE_LIFT_ID, SparkLowLevel.MotorType.kBrushless)
         self.intake_feed = Controller1d(intake_consts.INTAKE_FEED_ID, SparkLowLevel.MotorType.kBrushless)
-
+        
         lift_config = SparkMaxConfig()
         lift_config.inverted(intake_consts.INTAKE_LIFT_INVERTED)
         lift_config.setIdleMode(intake_consts.INTAKE_LIFT_IDLE_MODE)
@@ -25,58 +29,88 @@ class Intake(Subsystem):
         lift_config.closedLoop.setFeedbackSensor(intake_consts.INTAKE_LIFT_CLOSED_LOOP_FEEDBACK_SENSOR)
         lift_config.closedLoop.pid(intake_consts.INTAKE_LIFT_kP, intake_consts.INTAKE_LIFT_kI, intake_consts.INTAKE_LIFT_kD)
         lift_config.closedLoop.outputRange(-2.0, 2.0)
-
+        
         self.intake_lift.config(lift_config)
-
+        
         feed_config = SparkMaxConfig()
         feed_config.inverted(intake_consts.INTAKE_FEED_INVERTED)
         feed_config.setIdleMode(intake_consts.INTAKE_FEED_IDLE_MODE)
         feed_config.smartCurrentLimit(intake_consts.INTAKE_FEED_SMART_LIMIT)
         feed_config.voltageCompensation(intake_consts.INTAKE_FEED_VOLTAGE_COMPENSATION)
-
+        
         self.intake_feed.config(feed_config)
-
+        
         self.lift_encoder = self.intake_lift.encoder
         self.lift_loop = self.intake_lift.closed_loop
-
+        
         self.feed_encoder = self.intake_feed.encoder
-
+        
         self.init_pos = self.lift_encoder.getPosition() * ((48 * (50 / 18)) / 360)
-
+        
         self.feed_power = 0
-
+        
+        if wpilib.RobotBase.isSimulation():
+            self._init_simulation()
+    
+    def _init_simulation(self):
+        self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
+        
+        intake_feed_plant = LinearSystemId.identifyVelocitySystemRadians(
+            kV=self.battery_voltage / (intake_consts.INTAKE_FEED_MAX_SPEED * (2 * pi) / 60),
+            kA=0.01,
+        )
+        self.intake_feed_system_sim = LinearSystemSim_1_1_1(intake_feed_plant)
+        self.intake_feed_motor_sim = SparkMaxSim(self.intake_feed.motor, DCMotor.NEO(1))
+        
+        self.last_sim_time = wpilib.Timer.getFPGATimestamp()
+    
+    # In degrees
     def set_lift_position(self, target_pos: float) -> None:
         # self.target_pos = max(intake_consts.INTAKE_LIFT_UP_POS, min(target_pos, intake_consts.INTAKE_LIFT_DOWN_POS))  # Clamp TODO: once have more accurate method of position detection add back
         self.target_pos = target_pos * ((48 * (50 / 18)) / 360) + self.init_pos
-
+        
         current_pos = self.lift_encoder.getPosition()
         # self.stall_detector.update(current_pos)
         if abs(current_pos - self.target_pos) < intake_consts.INTAKE_LIFT_POSITION_THRESHOLD:  # or self.stall_detector.is_stalling(self.target_pos):
             self.target_pos = current_pos
-
+        
         self.lift_loop.setSetpoint(self.target_pos, SparkLowLevel.ControlType.kPosition)
-
+    
     # Speed between -1, 1
     def set_feed_speed(self, speed: float) -> None:
         self.feed_power = speed
-
+        
         self.intake_feed.set_pow(self.feed_power)
-
+    
     def stop(self) -> None:
         self.intake_lift.stop()
         self.intake_feed.stop()
-
+    
     def stop_feed(self) -> None:
         self.intake_feed.stop()
-
+    
     def get_intake_lift_pos(self) -> float:
         return self.lift_encoder.getPosition() * 360
-
+    
     @override
     def periodic(self) -> None:
         NetworkServer.getInstance().set_float("intake-lift-pos", self.lift_encoder.getPosition() / ((48 * (50 / 18)) / 360))
         NetworkServer.getInstance().set_float("intake-feed-power", self.feed_power)
-
+    
+    @override
+    def simulationPeriodic(self):
+        current_time = wpilib.Timer.getFPGATimestamp()
+        tm_diff = current_time - self.last_sim_time
+        self.last_sim_time = current_time
+        
+        self.intake_feed_system_sim.setInput(0, self.intake_feed.motor.get() * self.battery_voltage)
+        self.intake_feed_system_sim.update(tm_diff)
+        out = self.intake_feed_system_sim.getOutput(0)
+        
+        radps_to_rpm = 60 / (2 * pi)
+        conversion_factor = radps_to_rpm * self.intake_feed.motor.configAccessor.encoder.getVelocityConversionFactor()
+        self.intake_feed_motor_sim.iterate(out * conversion_factor, self.battery_voltage, tm_diff)
+    
     # def periodic(self) -> None:
     #     print(self.target_pos, self.target_pos - self.lift_encoder.getPosition(), self.intake_lift.getAppliedOutput())
 

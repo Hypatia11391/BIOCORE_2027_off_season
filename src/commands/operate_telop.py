@@ -1,6 +1,10 @@
 from typing import override
 
+<<<<<<< HEAD
 from commands2 import Command, CommandScheduler
+=======
+from commands2 import Command
+>>>>>>> drive-handler-dev
 from wpilib import Joystick
 
 import src.commands.operation_constants as operation_consts
@@ -20,7 +24,10 @@ class OperateTelop(Command):
         kicker: Kicker,
         shooter: Shooter,
         controller: Joystick,
+<<<<<<< HEAD
         auto_shoot_command: Command,
+=======
+>>>>>>> drive-handler-dev
     ) -> None:
         super().__init__()
 
@@ -43,6 +50,8 @@ class OperateTelop(Command):
 
     @override
     def execute(self) -> None:
+        return
+
         self.update_states()
 
         match self.intake_lift_state:
