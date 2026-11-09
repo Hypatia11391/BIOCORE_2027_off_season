@@ -35,98 +35,79 @@ class RobotContainer:
             drive_consts.REAR_LEFT_LOCATION,
             drive_consts.REAR_RIGHT_LOCATION,
         )
-
+        
         self.navx = Navx()
-
+        
         self.pose_estimator = MecanumDrivePoseEstimator3d(
             self.kinematics,
             self.navx.get_full_rotation(),
             MecanumDriveWheelPositions(),
             consts.STARTING_POSE,
         )
-
+        
         self.drive = DriveTrainMecanum(self.pose_estimator, self.navx)
         self.intake = Intake()
         self.feed = Feed()
         self.kicker = Kicker()
         self.shooter = Shooter()
-
+        
         self.controller_drive = Joystick(0)
         self.controller_operate = Joystick(1)
-
+        
         self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate, self.get_shoot_sequence()))
-
+        
         NetworkServer.getInstance().set_string_list("auto-list", ["Drive Forward 1m", "Turn 90 Clockwise"])
-
+        
         self.field = Field2d()
-
+        
         self.autonomous_command = cmd.none()
-
+        
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
-
+        
         NamedCommands.registerCommand("intake-balls", IntakeBalls(self.intake))
-
+    
     def get_autonomous_command(self) -> Command:
         command_str = NetworkServer.getInstance().get_string("selected-auto")
-
+        
         print(command_str)
-
+        
         if command_str != "":
             self.autonomous_command = PathPlannerAuto(command_str)
         else:
             self.autonomous_command = cmd.none()
         return self.autonomous_command
-
-    def get_drive_to_pos_command(self, target_pos: Pose2d) -> Command:
-        constraints = PathConstraints(
-            maxVelocityMps=2,
-            maxAccelerationMpsSq=1,
-            maxAngularVelocityRps=2 * math.pi,
-            maxAngularAccelerationRpsSq=math.pi,
-            nominalVoltage=12,
-        )
-
-        drive_to_pos_command = AutoBuilder.pathfindToPose(
-            target_pos,
-            constraints,
-            goal_end_vel=0,
-        )
-
-        return drive_to_pos_command
-
+    
     def shot_possible(self, relative_target) -> bool:
         return FireCommand.calculate_rpm(relative_target).is_possible
-
+    
     def get_relative_target(self, target) -> Translation3d:
         return target - self.pose_estimator.getEstimatedPosition().translation()
-
+    
     def get_shoot_sequence(self) -> Command:
         target = Translation3d(5, 2, 1)
         shoot_sequence = cmd.either(
             cmd.sequence(
                 StopCommand(self.feed, self.kicker, self.shooter, self.drive, self.intake),
-                DeferredCommand(
-                    lambda: TurnToCommand(
-                        self.get_relative_target(target).toTranslation2d().angle().degrees(),
-                        self.drive,
-                        self.pose_estimator,
-                        PIDController(1, 0, 0),  # TODO: Tune
-                    )
-                ),
+                DeferredCommand(lambda: TurnToCommand(
+                    self.get_relative_target(target).toTranslation2d().angle().degrees(),
+                    self.drive,
+                    self.pose_estimator,
+                    PIDController(1, 0, 0),  # TODO: Tune
+                )),
                 FireCommand(target, self.feed, self.kicker, self.shooter, self.drive, self.pose_estimator),
             ),
             cmd.none(),
             lambda: self.shot_possible(self.get_relative_target(target)),
         )
-
+        
         return shoot_sequence
-
+    
     def zero_pose(self) -> None:
         self.pose_estimator.resetPose(consts.STARTING_POSE)
         self.navx.zero_yaw()
         self.drive.zero_encoder_positions()
-
+    
     def periodic(self) -> None:
         self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
         self.field.getObject("velocity").setPose(
@@ -134,8 +115,8 @@ class RobotContainer:
             self.drive.get_relative_speeds().vy,
             Rotation2d(self.drive.get_relative_speeds().omega),
         )
-
+        
         if not DriverStation.isAutonomous():
             self.field.getObject("trajectory").setPoses([])
-
+        
         NetworkServer.getInstance().set_field("field", self.field)

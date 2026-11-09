@@ -16,7 +16,7 @@ SHOOTER_OUTPUT_RANGE_MIN: Final[float] = -1.0
 SHOOTER_OUTPUT_RANGE_MAX: Final[float] = 1.0
 SHOOTER_FREE_SPEED: Final[float] = 5676.0
 SHOOTER_KV: Final[float] = 1 / SHOOTER_FREE_SPEED
-SHOOTER_RPM_TOLERANCE: Final[float] = 50.0
+SHOOTER_DEFAULT_RPM_TOLERANCE: Final[float] = 50.0
 
 SHOOTER_KP: Final[float] = 0.00006
 SHOOTER_KI: Final[float] = 0
