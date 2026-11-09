@@ -119,14 +119,13 @@ class DriveTrainMecanum(Subsystem):
         self.rl_motor_sim = rev.SparkMaxSim(self.left_rear_drive, DCMotor.NEO(1))
         self.rr_motor_sim = rev.SparkMaxSim(self.right_rear_drive, DCMotor.NEO(1))
         
-        self.navx_sim = SimDeviceSim("navX-Sensor[4]")
-        self.navx_sim_yaw = self.navx_sim.getDouble("Yaw")
+        #self.navx_sim = SimDeviceSim("navX-Sensor[4]")
+        #self.navx_sim_yaw = self.navx_sim.getDouble("Yaw")
         
         self.last_sim_time = wpilib.Timer.getFPGATimestamp()
     
     def should_flip_path(self) -> bool:
-        return DriverStation.getAlliance() ==        #)
- DriverStation.Alliance.kBlue
+        return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
     
     def drive(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
         # print("speeds:", forward_speed, strafe_speed, turn_speed)
@@ -274,7 +273,7 @@ class DriveTrainMecanum(Subsystem):
         # Update simulated navx gyro heading
         # We convert from rad/s to deg/frame
         # wpilib is CCW positive, navx is CW positive, so we subtract
-        self.navx_sim_yaw.set(self.navx_sim_yaw.get() - self.get_relative_speeds().omega * tm_diff * (180 / pi))
+        #self.navx_sim_yaw.set(self.navx_sim_yaw.get() - self.get_relative_speeds().omega * tm_diff * (180 / pi))
     
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()
@@ -285,19 +284,6 @@ class DriveTrainMecanum(Subsystem):
         positions.rearRight = self.right_rear_encoder.getPosition()
         
         return positions
-
-    #def zero_encoder_positions(self) -> None:
-    #    self.left_front_encoder.setPosition(0)
-    #    self.right_front_encoder.setPosition(0)
-    #    self.left_rear_encoder.setPosition(0)
-    #    self.right_rear_encoder.setPosition(0)
-
-    
-    #def zero_encoder_positions(self) -> None:
-    #    self.left_front_encoder.setPosition(0)
-    #    self.right_front_encoder.setPosition(0)
-    #    self.left_rear_encoder.setPosition(0)
-    #    self.right_rear_encoder.setPosition(0)
     
     def get_wheel_speeds(self) -> MecanumDriveWheelSpeeds:
         return MecanumDriveWheelSpeeds(
@@ -309,18 +295,6 @@ class DriveTrainMecanum(Subsystem):
     
     def get_relative_speeds(self) -> ChassisSpeeds:
         return self.kinematics.toChassisSpeeds(self.get_wheel_speeds())
-
-    #def get_pose_2d(self) -> Pose2d:
-    #    return self.pose_estimator.getEstimatedPosition().toPose2d()
-#
-    #def get_pose_3d(self) -> Pose3d:
-    #    return self.pose_estimator.getEstimatedPosition()
-#
-    #def reset_pose_2d(self, pose: Pose2d) -> None:
-    #    self.pose_estimator.resetPose(Pose3d(pose))
-#
-    #def reset_pose_3d(self, pose: Pose3d) -> None:
-    #    self.pose_estimator.resetPose(pose)
 
     def config_drive_motor(self, motor: rev.SparkMax, inverted: bool) -> None:
         config = rev.SparkMaxConfig()
