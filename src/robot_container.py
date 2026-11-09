@@ -22,6 +22,8 @@ from src.subsystems.mechanisms.shooter import Shooter
 
 class RobotContainer:
     def __init__(self, robot):
+        self.robot = robot
+
         self.kinematics = MecanumDriveKinematics(
             drive_consts.FRONT_LEFT_LOCATION,
             drive_consts.FRONT_RIGHT_LOCATION,
@@ -93,5 +95,13 @@ class RobotContainer:
         
         if not DriverStation.isAutonomous():
             self.field.getObject("trajectory").setPoses([])
+        
+        if self.robot.test_command is not None and 'pose' in (frame:=self.robot.test_command.recording.current_frame()):
+            pose = frame['pose']
+            self.field.getObject("target-pose").setPose(
+                pose[0],
+                pose[1],
+                Rotation2d(pose[2]),
+            )
         
         NetworkServer.getInstance().set_field("field", self.field)
