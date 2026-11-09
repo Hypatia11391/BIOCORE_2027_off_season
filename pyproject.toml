@@ -35,4 +35,4 @@ requires = [
 line-length = 1000
 
 [tool.ruff.lint]
-ignore = ["E501"]
+ignore = ["E501", "I001"]

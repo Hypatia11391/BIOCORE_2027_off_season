@@ -1,19 +1,26 @@
-from commands2 import Command
-from wpilib import Joystick, Timer
-
 from typing import override
 
-from src.subsystems.mechanisms.intake import Intake
-from src.subsystems.mechanisms.feed import Feed
-from src.subsystems.mechanisms.kicker import Kicker
-from src.subsystems.mechanisms.shooter import Shooter
+from commands2 import Command
+from wpilib import Joystick
+
 import src.commands.operation_constants as operation_consts
 from src.buttons import Buttons
 from src.joysticks_axes import JoystickAxes
+from src.subsystems.mechanisms.feed import Feed
+from src.subsystems.mechanisms.intake import Intake
+from src.subsystems.mechanisms.kicker import Kicker
+from src.subsystems.mechanisms.shooter import Shooter
 
 
 class OperateTelop(Command):
-    def __init__(self, intake: Intake, feed: Feed, kicker: Kicker, shooter: Shooter, controller: Joystick) -> None:
+    def __init__(
+        self,
+        intake: Intake,
+        feed: Feed,
+        kicker: Kicker,
+        shooter: Shooter,
+        controller: Joystick,
+    ) -> None:
         super().__init__()
 
         self.intake = intake
@@ -27,14 +34,14 @@ class OperateTelop(Command):
         self.intake_lift_state = operation_consts.IntakeLiftState.OFF.value
         self.intake_feed_state = operation_consts.IntakeFeedState.OFF.value
 
-        self.time_at_target_speed = -1.0
-
     @override
     def initialize(self) -> None:
         self.intake.stop()
 
     @override
     def execute(self) -> None:
+        return
+
         self.update_states()
 
         match self.intake_lift_state:
@@ -59,31 +66,19 @@ class OperateTelop(Command):
 
         rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
 
-        print(f"{rt_shoot=}")
-        print(f"left voltage: {self.shooter.get_left_voltage()}")
-        print(f"right voltage: {self.shooter.get_right_voltage()}")
-
         if abs(rt_shoot) > 0.08:
-            left_shooter_speed = rt_shoot * operation_consts.HIGH_LEFT_RPM
-            right_shooter_speed = rt_shoot * operation_consts.HIGH_RIGHT_RPM
-
-            print("motor speeds", left_shooter_speed, right_shooter_speed)
+            left_shooter_speed = 2145  # rt_shoot * operation_consts.HIGH_LEFT_RPM
+            right_shooter_speed = left_shooter_speed  # rt_shoot * operation_consts.HIGH_RIGHT_RPM
 
             self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
 
             if self.shooter.is_at_target_rpm():
-                print("running kicker")
                 self.kicker.set_kicker_speed(operation_consts.KICKER_POWER)
-                print("running feed")
                 self.feed.set_feed_speed(operation_consts.FEED_POWER)
-
-                if self.time_at_target_speed < 0.0:
-                    self.time_at_target_speed = Timer.getFPGATimestamp()
 
             else:
                 self.feed.stop()
                 self.kicker.stop()
-                # self.shooter.stop()
 
         else:
             self.feed.stop()
