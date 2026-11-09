@@ -1,7 +1,11 @@
 from typing import override
+from math import pi
 
+import wpilib
 from commands2 import Subsystem
-from rev import PersistMode, ResetMode, SparkBase, SparkLowLevel, SparkMax, SparkMaxConfig
+from rev import PersistMode, ResetMode, SparkBase, SparkLowLevel, SparkMax, SparkMaxConfig, SparkMaxSim
+from wpimath.system.plant import LinearSystemId, DCMotor
+from wpilib.simulation import LinearSystemSim_1_1_1
 
 import src.subsystems.mechanisms.shooter_constants as shooter_consts
 from src.network_server.network_server import NetworkServer
@@ -26,6 +30,23 @@ class Shooter(Subsystem):
         self.target_rpm_left = 0
         self.target_rpm_right = 0
 
+        if wpilib.RobotBase.isSimulation():
+            self._init_simulation()
+
+    def _init_simulation(self):
+        self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
+        plant = LinearSystemId.identifyVelocitySystemRadians(
+            kV = self.battery_voltage / (shooter_consts.SHOOTER_MAX_SPEED * (2*pi)/60),
+            kA = 0.01,
+        )
+        
+        self.system_sim = LinearSystemSim_1_1_1(plant)
+        
+        self.motor_left_sim = SparkMaxSim(self.motor_left, DCMotor.NEO(1))
+        self.motor_right_sim = SparkMaxSim(self.motor_right, DCMotor.NEO(1))
+        
+        self.last_sim_time = wpilib.Timer.getFPGATimestamp()
+    
     def set_target_rpm(self, target_rpm_left: float, target_rpm_right: float) -> None:
         self.target_rpm_left = target_rpm_left
         self.target_rpm_right = target_rpm_right
@@ -83,3 +104,16 @@ class Shooter(Subsystem):
         NetworkServer.getInstance().set_float("shooter-left-target-rpm", self.target_rpm_left)
         NetworkServer.getInstance().set_float("shooter-right-rpm", self.right_encoder.getVelocity())
         NetworkServer.getInstance().set_float("shooter-right-target-rpm", self.target_rpm_right)
+
+    @override
+    def simulationPeriodic(self):
+        current_time = wpilib.Timer.getFPGATimestamp()
+        tm_diff = current_time - self.last_sim_time
+        self.last_sim_time = current_time
+
+        in_power = (self.motor_left.get() + self.motor_right.get())
+        self.system_sim.setInput(0, in_power * self.battery_voltage)
+        self.system_sim.update(tm_diff)
+        out_rpm = self.system_sim.getOutput(0) * 60/(2*pi)
+        self.motor_left_sim.iterate(out_rpm, self.battery_voltage, tm_diff)
+        self.motor_right_sim.iterate(out_rpm, self.battery_voltage, tm_diff)

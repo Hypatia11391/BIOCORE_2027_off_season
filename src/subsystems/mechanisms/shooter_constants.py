@@ -21,3 +21,5 @@ SHOOTER_RPM_TOLERANCE: Final[float] = 50.0
 SHOOTER_KP: Final[float] = 0.00006
 SHOOTER_KI: Final[float] = 0
 SHOOTER_KD: Final[float] = 0.1
+
+SHOOTER_MAX_SPEED: Final[float] = 40
