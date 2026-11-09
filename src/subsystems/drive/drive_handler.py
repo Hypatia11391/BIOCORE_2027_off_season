@@ -77,6 +77,14 @@ class DriveHandler:
         self.current_turn = -1
         
         self.current_id = 0
+        
+        self.using_chassis_speeds = False
+        
+        self.x_speed = 0
+        self.y_speed = 0
+        self.turn_speed = 0
+        
+        self.chassis_speeds = ChassisSpeeds()
     
     def get_id(self) -> int:
         self.current_id += 1
@@ -99,14 +107,6 @@ class DriveHandler:
         return self.drive.get_relative_speeds()
     
     def periodic(self) -> None:
-        using_chassis_speeds = False
-        
-        x_speed = 0
-        y_speed = 0
-        turn_speed = 0
-        
-        chassis_speeds = ChassisSpeeds()
-        
         for command in self.command_buffer:
             match command.command_type:
                 case CommandTypes.CLAIM_COMMAND.value:
@@ -118,24 +118,25 @@ class DriveHandler:
                 
                 case CommandTypes.DRIVE_TRANSLATION_COMMAND.value:
                     if self.current_translation == command.id:
-                        x_speed = command.x_speed
-                        y_speed = command.y_speed
+                        self.x_speed = command.x_speed
+                        self.y_speed = command.y_speed
                 
                 case CommandTypes.DRIVE_TURN_COMMAND.value:
                     if self.current_translation == command.id:
-                        turn_speed = command.turn_speed
+                        self.turn_speed = command.turn_speed
                 
                 case CommandTypes.DRIVE_TURN_TRANSLATION_COMMAND.value:
                     if self.current_translation == command.id and self.current_turn == command.id:
-                        x_speed = command.x_speed
-                        y_speed = command.y_speed
-                        turn_speed = command.turn_speed
+                        self.x_speed = command.x_speed
+                        self.y_speed = command.y_speed
+                        self.turn_speed = command.turn_speed
                 
                 case CommandTypes.DRIVE_CHASSIS_SPEEDS_COMMAND.value:
                     if self.current_translation == command.id and self.current_turn == command.id:
-                        chassis_speeds = command.chassis_speeds
+                        self.chassis_speeds = command.chassis_speeds
         
-        if not using_chassis_speeds:
-            self.drive.drive(x_speed, y_speed, turn_speed)
+        if not self.using_chassis_speeds:
+            print(f"{(self.x_speed, self.y_speed, self.turn_speed)=}")
+            self.drive.drive(self.x_speed, self.y_speed, self.turn_speed)
         else:
-            self.drive.drive_from_chassis_speeds(chassis_speeds)
+            self.drive.drive_from_chassis_speeds(self.chassis_speeds)

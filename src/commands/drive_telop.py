@@ -4,7 +4,7 @@ from commands2 import Command
 from wpilib import Joystick, RobotBase
 
 from src.constants import SPEED_SCALAR
-from src.subsystems.drive.drive_handler import DriveHandler, DriveTurnAndTranslationCommand
+from src.subsystems.drive.drive_handler import DriveHandler, DriveTurnAndTranslationCommand, ClaimCommand
 
 
 class DriveTelop(Command):
@@ -20,7 +20,7 @@ class DriveTelop(Command):
     
     @override
     def initialize(self) -> None:
-        pass
+        self.drive_handler.push_command(ClaimCommand(self.drive_id, claim_translation=True, claim_turn=True))
     
     @override
     def execute(self) -> None:

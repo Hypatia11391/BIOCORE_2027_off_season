@@ -9,14 +9,13 @@ from wpimath.system.plant import DCMotor, LinearSystemId
 
 from src.subsystems.drive.drive_train_constants import WHEEL_CIRCUMFERENCE, WHEEL_GEAR_RATIO, MAX_SPEED
 
-
 kA = 0.0007
 
 
-class PhysicsEngine: 
+class PhysicsEngine:
     def __init__(self, physics_controller: PhysicsInterface, robot: "Robot"):
         self.physics_controller = physics_controller
-        self.drive = robot.robot_container.drive
+        self.drive = robot.robot_container.drive_handler
     
     def update_sim(self, now: float, tm_diff: float):
         self.physics_controller.drive(self.drive.get_relative_speeds(), tm_diff)
