@@ -18,6 +18,7 @@ from src.subsystems.mechanisms.feed import Feed
 from src.subsystems.mechanisms.intake import Intake
 from src.subsystems.mechanisms.kicker import Kicker
 from src.subsystems.mechanisms.shooter import Shooter
+from src.subsystems.drive.drive_handler import DriveHandler
 
 
 class RobotContainer:
@@ -28,65 +29,67 @@ class RobotContainer:
             drive_consts.REAR_LEFT_LOCATION,
             drive_consts.REAR_RIGHT_LOCATION,
         )
-
+        
         self.navx = Navx()
-
+        
         self.pose_estimator = MecanumDrivePoseEstimator3d(
             self.kinematics,
             self.navx.get_full_rotation(),
             MecanumDriveWheelPositions(),
             consts.STARTING_POSE,
         )
-
+        
         self.field = Field2d()
-
-        self.drive = DriveTrainMecanum(self.pose_estimator, self.navx, self.field)
+        
+        self.drive_handler = DriveHandler(DriveTrainMecanum(self.pose_estimator, self.navx, self.field))
         self.intake = Intake()
         self.feed = Feed()
         self.kicker = Kicker()
         self.shooter = Shooter()
-
+        
         self.controller_drive = Joystick(0)
         self.controller_operate = Joystick(1)
-
-        self.drive.setDefaultCommand(DriveTelop(self.drive, self.controller_drive))
+        
+        self.drive_handler.get_dummy_translation().setDefaultCommand(DriveTelop(self.drive_handler, self.controller_drive))
         self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
-
+        
         NetworkServer.getInstance().set_string_list("auto-list", ["Drive Forward 1m and Turn 90 Clockwise", "Drive Forward 1m", "Drive With Turn", "Turn 90 Clockwise"])
-
+        
         self.autonomous_command = Command()
-
+        
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
-
+    
     def get_autonomous_command(self) -> Command:
-
+        
         command_str = NetworkServer.getInstance().get_string("selected-auto")
-
+        
         print(command_str)
-
+        
         if command_str != "":
             self.autonomous_command = PathPlannerAuto(command_str)
             self.autonomous_command = self.autonomous_command.beforeStarting(lambda *args: NetworkServer.getInstance().set_bool("is-in-auto", True))
             self.autonomous_command = self.autonomous_command.finallyDo(lambda *args: NetworkServer.getInstance().set_bool("is-in-auto", False))
         else:
             self.autonomous_command = Command()
-
+        
         return self.autonomous_command
-
+    
     def zero_pose(self) -> None:
         self.pose_estimator.resetPose(consts.STARTING_POSE)
         self.navx.zero_yaw()
-        self.drive.zero_encoder_positions()
-
+        self.drive_handler.zero_encoder_positions()
+    
     def periodic(self) -> None:
         self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
         self.field.getObject("velocity").setPose(
-            self.drive.get_relative_speeds().vx,
-            self.drive.get_relative_speeds().vy,
-            Rotation2d(self.drive.get_relative_speeds().omega),
+            self.drive_handler.get_relative_speeds().vx,
+            self.drive_handler.get_relative_speeds().vy,
+            Rotation2d(self.drive_handler.get_relative_speeds().omega),
         )
-
+        
         if not DriverStation.isAutonomous():
             self.field.getObject("trajectory").setPoses([])
-
+        
         NetworkServer.getInstance().set_field("field", self.field)
+        
+        self.drive_handler.periodic()
