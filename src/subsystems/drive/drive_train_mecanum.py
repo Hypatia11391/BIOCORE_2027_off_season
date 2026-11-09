@@ -29,9 +29,8 @@ class DriveTrainMecanum(Subsystem):
         self.right_front_drive = rev.SparkMax(FRONT_RIGHT_ID, rev.SparkLowLevel.MotorType.kBrushless)
         self.left_rear_drive = rev.SparkMax(REAR_LEFT_ID, rev.SparkLowLevel.MotorType.kBrushless)
         self.right_rear_drive = rev.SparkMax(REAR_RIGHT_ID, rev.SparkLowLevel.MotorType.kBrushless)
-
+        
         #config = rev.SparkMaxConfig()
-
         
         self.config_drive_motor(self.left_front_drive, True)
         self.config_drive_motor(self.right_front_drive, False)
@@ -49,16 +48,16 @@ class DriveTrainMecanum(Subsystem):
             self.right_front_drive,
             self.right_rear_drive,
         )
-
+        
         self.kinematics = MecanumDriveKinematics(
             FRONT_LEFT_LOCATION,
             FRONT_RIGHT_LOCATION,
             REAR_LEFT_LOCATION,
             REAR_RIGHT_LOCATION,
         )
-
+        
         #config = RobotConfig.fromGUISettings()
-
+        
         #AutoBuilder.configure(
         #    self.get_pose_2d,
         #    self.reset_pose_2d,
@@ -69,10 +68,10 @@ class DriveTrainMecanum(Subsystem):
         #    self.should_flip_path,
         #    self,
         #)
-
-    #def should_flip_path(self) -> bool:
-    #    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
-
+        
+        #def should_flip_path(self) -> bool:
+        #    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
+        
         #def path_planner_drive(speeds: ChassisSpeeds, feedforwards: DriveFeedforwards):
         #    self.drive_from_chassis_speeds(speeds)
         #    field.getObject("target-velocity").setPose(Pose2d(speeds.vx, speeds.vy, speeds.omega))
@@ -82,7 +81,7 @@ class DriveTrainMecanum(Subsystem):
         
         if wpilib.RobotBase.isSimulation():
             self._init_simulation()
-
+        
         kP = 0.01
         kI = 0.005
         kD = 0.05
@@ -91,11 +90,11 @@ class DriveTrainMecanum(Subsystem):
         self.fr_pid = PIDController(kP, kI, kD)
         self.rl_pid = PIDController(kP, kI, kD)
         self.rr_pid = PIDController(kP, kI, kD)
-
+        
         kS = 0.58
         kV = 1.63
         kA = 0.1
-
+        
         self.fl_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
         self.fr_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
         self.rl_feed_forward = SimpleMotorFeedforwardMeters(kS, kV, kA)
@@ -105,7 +104,9 @@ class DriveTrainMecanum(Subsystem):
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
         
         wheel_plant = LinearSystemId.identifyVelocitySystemRadians(
-            kV=self.battery_voltage / (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO * (2 * pi)),  # ratio of volts to speed in rad/s
+            kV=self.battery_voltage /
+            (MAX_SPEED / WHEEL_CIRCUMFERENCE * WHEEL_GEAR_RATIO *
+             (2 * pi)),  # ratio of volts to speed in rad/s
             kA=0.00001,
         )
         
@@ -137,10 +138,9 @@ class DriveTrainMecanum(Subsystem):
         # turn_speed = max(min(turn_speed, clamp), -clamp)
         
         self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed)
-
+    
     #def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
     #    self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation()) # <----------------- ToDo: Switch to Pose_Handler
-
     
     #def drive_field_oriented(self, forward_speed: float, strafe_speed: float, turn_speed: float) -> None:
     #    self.robot_drive.driveCartesian(forward_speed, strafe_speed, turn_speed, self.navx.get_2d_rotation())
@@ -149,21 +149,21 @@ class DriveTrainMecanum(Subsystem):
         # forward_speed = speeds.vx
         # strafe_speed = speeds.vy
         # turn_speed = speeds.omega
-
+        
         # forward_speed_percent = forward_speed / MAX_SPEED
         # strafe_speed_percent = strafe_speed / MAX_SPEED
         # turn_speed_percent = turn_speed / MAX_ANGULAR_SPEED
-
+        
         # self.drive(forward_speed_percent, strafe_speed_percent, turn_speed_percent)
-
+        
         NetworkServer.getInstance().set_float("front-left", self.left_front_drive.getAppliedOutput())
         NetworkServer.getInstance().set_float("front-right", self.right_front_drive.getAppliedOutput())
         NetworkServer.getInstance().set_float("rear-left", self.left_rear_drive.getAppliedOutput())
         NetworkServer.getInstance().set_float("rear-right", self.right_rear_drive.getAppliedOutput())
-
+        
         #print(f"{self.navx.get_angualar_velocity()=}")
         #print(f"{speeds.omega=}")
-
+        
         wheel_speeds = self.kinematics.toWheelSpeeds(speeds)
         
         wheel_speeds.desaturate(MAX_SPEED)
@@ -176,23 +176,23 @@ class DriveTrainMecanum(Subsystem):
         fr_pid_volts = self.fr_pid.calculate(self.right_front_encoder.getVelocity(), wheel_speeds.frontRight)
         rl_pid_volts = self.rl_pid.calculate(self.left_rear_encoder.getVelocity(), wheel_speeds.rearLeft)
         rr_pid_volts = self.rr_pid.calculate(self.right_rear_encoder.getVelocity(), wheel_speeds.rearRight)
-
+        
         current_speeds = self.get_wheel_speeds()
         
         fl_feed_forward_volts = self.fl_feed_forward.calculate(
-            current_speeds.frontLeft, 
+            current_speeds.frontLeft,
             wheel_speeds.frontLeft,
         )
         fr_feed_forward_volts = self.fr_feed_forward.calculate(
-            current_speeds.frontRight, 
+            current_speeds.frontRight,
             wheel_speeds.frontRight,
         )
         rl_feed_forward_volts = self.rl_feed_forward.calculate(
-            current_speeds.rearLeft, 
+            current_speeds.rearLeft,
             wheel_speeds.rearLeft,
         )
         rr_feed_forward_volts = self.rr_feed_forward.calculate(
-            current_speeds.rearRight, 
+            current_speeds.rearRight,
             wheel_speeds.rearRight,
         )
         
@@ -208,7 +208,7 @@ class DriveTrainMecanum(Subsystem):
         #        self.navx.get_full_rotation(),
         #        self.get_wheel_positions(),
         #    )
-
+        
         # print(f"{self.get_wheel_speeds()=}")
         # print(f"{self.get_relative_speeds()=}")
         # print(self.pose_estimator.getEstimatedPosition().toPose2d())
@@ -295,7 +295,7 @@ class DriveTrainMecanum(Subsystem):
     
     def get_relative_speeds(self) -> ChassisSpeeds:
         return self.kinematics.toChassisSpeeds(self.get_wheel_speeds())
-
+    
     def config_drive_motor(self, motor: rev.SparkMax, inverted: bool) -> None:
         config = rev.SparkMaxConfig()
         
