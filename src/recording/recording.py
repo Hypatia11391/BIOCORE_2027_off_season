@@ -45,7 +45,7 @@ class Recording:
     def jump_to_relative_time(self, time):
         rec_time = time * 1_000_000 + self.data[0]["time"]
         frame = self.current_frame() if self.i >= 0 else None
-        while not frame or frame["time"] < rec_time:
+        while (not frame or frame["time"] < rec_time) and not self.is_finished():
             frame = self.next_frame()
         if self.i >= 1 and abs(frame["time"] - rec_time) > abs(rec_time - self.peek_prev_frame()["time"]):
             frame = self.prev_frame()

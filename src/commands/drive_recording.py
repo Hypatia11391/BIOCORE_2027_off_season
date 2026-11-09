@@ -7,7 +7,7 @@ import wpilib
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
 from src.recording.recording import Recording
 
-OUTPUT_NAMES = {'applied-outputs', 'set-values'}
+OUTPUT_NAMES = {'applied-outputs', 'set-values', 'appliedOutput'}
 
 
 class DriveRecording(Command):
@@ -41,3 +41,7 @@ class DriveRecording(Command):
             rl_percent=frame[name][2],
             rr_percent=frame[name][3],
         )
+    
+    def reset(self):
+        self.start_time = wpilib.Timer.getFPGATimestamp()
+        self.recording.reset()

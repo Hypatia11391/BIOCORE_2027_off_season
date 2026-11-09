@@ -21,6 +21,4 @@ class LinearSystemMecanumDriveSim(IntegrativeDriveSimBase):
     
     @override
     def derivatives(self, wheel_speeds: np.ndarray, motor_inputs: np.ndarray) -> np.ndarray:
-        # print(f'{wheel_speeds=}')
-        # print(f'{self.A @ wheel_speeds + self.B @ motor_inputs=}')
         return (self.A @ wheel_speeds + self.B @ motor_inputs)

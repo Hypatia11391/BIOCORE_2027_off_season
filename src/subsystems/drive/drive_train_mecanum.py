@@ -111,8 +111,8 @@ class DriveTrainMecanum(Subsystem):
     def _init_simulation(self):
         self.battery_voltage = wpilib.RobotController.getBatteryVoltage()
         
-        kV = float(os.environ.get('kV', None) or DEFAULT_kV)  # volts per wheel rad/s**2
-        kA = float(os.environ.get('kA', None) or DEFAULT_kA)  # volts per wheel radian/s (after gear ratio reduction)
+        kV = float(os.environ.get('kV', None) or DEFAULT_kV)  # volts per wheel rad/s
+        kA = float(os.environ.get('kA', None) or DEFAULT_kA)  # volts per wheel radian/s**2 (after gear ratio reduction)
         kS = float(os.environ.get('kS', None) or DEFAULT_kS)  # volts to overcome static friction
         plant = LinearSystemId.identifyVelocitySystemRadians(kV, kA)
         self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS)
@@ -189,7 +189,6 @@ class DriveTrainMecanum(Subsystem):
         self.right_rear_drive.set(rear_right_percent * bad_negation)
     
     def drive_from_raw_motor_set_values(self, fl_percent, fr_percent, rl_percent, rr_percent):
-        # print(f'driving from applied output {fl_percent=}')
         self.left_front_drive.set(fl_percent)
         self.right_front_drive.set(fr_percent)
         self.left_rear_drive.set(rl_percent)
@@ -242,8 +241,6 @@ class DriveTrainMecanum(Subsystem):
             -self.left_rear_drive.get() * self.battery_voltage,
             -self.right_rear_drive.get() * self.battery_voltage,
         ])
-
-        # if 'nan' in f'{wheel_speeds}': assert False, wheel_speeds
         
         # Update encoders
         # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
@@ -292,23 +289,15 @@ class DriveTrainMecanum(Subsystem):
     
     def get_relative_speeds(self) -> ChassisSpeeds:
         wheel_speeds = self.get_wheel_speeds()
-        # print(f'{wheel_speeds=}')
-        # if 'nan' in f'{wheel_speeds}': assert False, wheel_speeds
         return self.kinematics.toChassisSpeeds(wheel_speeds)
     
     def get_speeds_rms(self, target_speeds: ChassisSpeeds):
-        # print(f"{target_speeds=}")
         actual_speeds = self.get_relative_speeds()
-        # print(f"{actual_speeds=}")
         angular_weight = 0.2
         delta_vx = actual_speeds.vx - target_speeds.vx
-        # print(f"{delta_vx=}")
         delta_vy = actual_speeds.vy - target_speeds.vy
-        # print(f"{delta_vy=}")
         delta_omega = actual_speeds.omega - target_speeds.omega
-        # print(f"{delta_omega=}")
         rms = sqrt(delta_vx**2 + delta_vy**2 + (angular_weight * delta_omega)**2)
-        # print(f"{rms=}")
         return rms
     
     def get_pose_2d(self) -> Pose2d:
