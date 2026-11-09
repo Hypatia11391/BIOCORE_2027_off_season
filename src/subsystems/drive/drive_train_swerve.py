@@ -78,7 +78,7 @@ class DriveTrainSwerve(Subsystem):
             )
         
         module_states = self.kinematics.toSwerveModuleStates(chassis_speeds)
-        self.kinematics.desaturateWheelSpeeds(module_states, consts.MAX_LINEAR_SPEEDS)
+        self.kinematics.desaturateWheelSpeeds(module_states, consts.MAX_LINEAR_SPEED)
         
         self.fl_module.setDesiredState(module_states[0])
         self.fr_module.setDesiredState(module_states[1])

@@ -12,13 +12,6 @@ import src.subsystems.drive.swerve_constants as consts
 
 class SwerveModule:
     def __init__(self, drive_id: int, turn_id: int, cancoder_id: int, cancoder_offset: float):
-        # self.drive_motor_channel = drive_motor_channel
-        # self.turning_motor_channel = turning_motor_channel
-        # self.drive_encoder_channel_a = drive_encoder_channel_a
-        # self.drive_encoder_channel_b = drive_encoder_channel_b
-        # self.turning_encoder_channel_a = turning_encoder_channel_a
-        # self.turning_encoder_channel_b = turning_encoder_channel_b
-        
         self.drive_motor = TalonFX(drive_id)
         self.turn_motor = TalonFX(turn_id)
         

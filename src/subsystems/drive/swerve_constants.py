@@ -50,4 +50,4 @@ PATH_PLANNER_DRIVE_CONTROLLER: Final[PPHolonomicDriveController] = PPHolonomicDr
     PIDConstants(0.0, 0.0, 0.0),
 )
 
-MAX_LINEAR_SPEEDS: Final[meters_per_second] = 1
+MAX_LINEAR_SPEED: Final[meters_per_second] = 1
