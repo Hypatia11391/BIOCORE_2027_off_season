@@ -78,7 +78,7 @@ class DecoupledFireCommand(Command):
     @override
     def initialize(self):
         self.finished = False
-        self.time_at_target_speed = -1.0
+        self.time_at_target_speed = -1
         self.time_attempting_shot = Timer.getFPGATimestamp()
     
     @override
