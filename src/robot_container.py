@@ -4,7 +4,7 @@ from pathplannerlib.auto import PathPlannerAuto
 from pathplannerlib.logging import PathPlannerLogging
 from wpilib import DriverStation, Field2d, Joystick
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.geometry import Rotation2d
+from wpimath.geometry import Rotation2d, Pose2d, Translation2d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
 
 import src.constants as consts
@@ -23,7 +23,7 @@ from src.subsystems.mechanisms.shooter import Shooter
 class RobotContainer:
     def __init__(self, robot):
         self.robot = robot
-
+        
         self.kinematics = MecanumDriveKinematics(
             drive_consts.FRONT_LEFT_LOCATION,
             drive_consts.FRONT_RIGHT_LOCATION,
@@ -86,7 +86,7 @@ class RobotContainer:
         self.drive.zero_encoder_positions()
     
     def periodic(self) -> None:
-        self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
+        self.field.setRobotPose(Pose2d(self.pose_estimator.getEstimatedPosition().toPose2d().translation() + Translation2d(8, 4), self.pose_estimator.getEstimatedPosition().toPose2d().rotation()))
         self.field.getObject("velocity").setPose(
             self.drive.get_relative_speeds().vx,
             self.drive.get_relative_speeds().vy,
@@ -96,11 +96,11 @@ class RobotContainer:
         if not DriverStation.isAutonomous():
             self.field.getObject("trajectory").setPoses([])
         
-        if self.robot.test_command is not None and 'pose' in (frame:=self.robot.test_command.recording.current_frame()):
-            pose = frame['pose']
+        if self.robot.test_command is not None and 'robotPose' in (frame := self.robot.test_command.recording.current_frame()):
+            pose = frame['robotPose']
             self.field.getObject("target-pose").setPose(
-                pose[0],
-                pose[1],
+                pose[0] + 8,
+                pose[1] + 4,
                 Rotation2d(pose[2]),
             )
         
