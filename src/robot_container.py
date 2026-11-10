@@ -86,7 +86,7 @@ class RobotContainer:
         self.drive.zero_encoder_positions()
     
     def periodic(self) -> None:
-        self.field.setRobotPose(Pose2d(self.pose_estimator.getEstimatedPosition().toPose2d().translation() + Translation2d(8, 4), self.pose_estimator.getEstimatedPosition().toPose2d().rotation()))
+        self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
         self.field.getObject("velocity").setPose(
             self.drive.get_relative_speeds().vx,
             self.drive.get_relative_speeds().vy,
@@ -99,8 +99,8 @@ class RobotContainer:
         if self.robot.test_command is not None and 'robotPose' in (frame := self.robot.test_command.recording.current_frame()):
             pose = frame['robotPose']
             self.field.getObject("target-pose").setPose(
-                pose[0] + 8,
-                pose[1] + 4,
+                pose[0],
+                pose[1],
                 Rotation2d(pose[2]),
             )
         
