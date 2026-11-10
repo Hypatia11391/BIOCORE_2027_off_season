@@ -16,7 +16,7 @@ from wpilib.drive import MecanumDrive
 from wpilib.simulation import SimDeviceSim
 from wpimath.controller import PIDController
 from wpimath.estimator import MecanumDrivePoseEstimator3d
-from wpimath.geometry import Pose2d, Pose3d
+from wpimath.geometry import Pose2d, Pose3d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds, MecanumDriveKinematics, MecanumDriveWheelPositions, MecanumDriveWheelSpeeds
 from wpimath.system.plant import LinearSystemId
 
@@ -115,7 +115,7 @@ class DriveTrainMecanum(Subsystem):
         kA = float(os.environ.get('kA', None) or DEFAULT_kA)  # volts per wheel radian/s**2 (after gear ratio reduction)
         kS = float(os.environ.get('kS', None) or DEFAULT_kS)  # volts to overcome static friction
         plant = LinearSystemId.identifyVelocitySystemRadians(kV, kA)
-        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS)
+        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS, kinematics=self.kinematics)
         
         self.fl_encoder_sim = rev.SparkRelativeEncoderSim(self.left_front_drive)
         self.fr_encoder_sim = rev.SparkRelativeEncoderSim(self.right_front_drive)
@@ -124,20 +124,16 @@ class DriveTrainMecanum(Subsystem):
         
         self.navx_sim = SimDeviceSim("navX-Sensor[4]")
         self.navx_sim_yaw = self.navx_sim.getDouble("Yaw")
-        
-        self.last_sim_time = wpilib.Timer.getFPGATimestamp()
     
     def reset_simulation(self, kV=None, kA=None, kS=None):
         if kV is None: kV = DEFAULT_kV
         if kA is None: kA = DEFAULT_kA
         if kS is None: kS = DEFAULT_kS
-        plant = LinearSystemId.identifyVelocitySystemRadians(kV, kA)
-        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS)
+        plant = LinearSystemId.identifyVelocitySystemMeters(kV, kA)
+        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS, kinematics=self.kinematics)
         
         self.navx_sim_yaw.set(0.0)
         
-        self.last_sim_time = wpilib.Timer.getFPGATimestamp()
-    
     def should_flip_path(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
     
@@ -201,8 +197,12 @@ class DriveTrainMecanum(Subsystem):
                 self.navx.get_full_rotation(),
                 self.get_wheel_positions(),
             )
+
             self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
-        
+            if wpilib.RobotBase.isSimulation():
+                pose = self.sim.state.pose()
+                self.field.getObject("simulated_pose").setPose(Pose2d(pose[0], pose[1], Rotation2d(pose[2])))
+                
         if DriverStation.isAutonomous():
             self.robot_drive.setSafetyEnabled(False)
         else:
@@ -230,38 +230,28 @@ class DriveTrainMecanum(Subsystem):
         )
     
     @override
-    def simulationPeriodic(self):
-        current_time = wpilib.Timer.getFPGATimestamp()
-        tm_diff = 1 / FPS  # current_time - self.last_sim_time
-        self.last_sim_time = current_time
-        
-        wheel_positions, wheel_speeds = self.sim.step(tm_diff, [
+    def simulationPeriodic(self):        
+        self.sim.step(1 / FPS, [
             -self.left_front_drive.get() * self.battery_voltage,
             -self.right_front_drive.get() * self.battery_voltage,
             -self.left_rear_drive.get() * self.battery_voltage,
             -self.right_rear_drive.get() * self.battery_voltage,
         ])
         
-        # Update encoders
-        # Rev library is apparently horrible so we need to multiply by the velocity conversion factor manually and hope it matches the position conversion factor
-        radps_to_rpm = 60 / (2 * pi)
-        conversion_factor = radps_to_rpm * self.left_front_drive.configAccessor.encoder.getVelocityConversionFactor()
+        wheel_positions = self.sim.state.wheel_positions()
+        self.fl_encoder_sim.setPosition(wheel_positions[0])
+        self.fr_encoder_sim.setPosition(wheel_positions[1])
+        self.rl_encoder_sim.setPosition(wheel_positions[2])
+        self.rr_encoder_sim.setPosition(wheel_positions[3])
         
-        self.fl_encoder_sim.setPosition(wheel_positions.frontLeft)
-        self.fr_encoder_sim.setPosition(wheel_positions.frontRight)
-        self.rl_encoder_sim.setPosition(wheel_positions.rearLeft)
-        self.rr_encoder_sim.setPosition(wheel_positions.rearRight)
+        wheel_speeds = self.sim.state.wheel_speeds()
+        self.fl_encoder_sim.setVelocity(wheel_speeds[0])
+        self.fr_encoder_sim.setVelocity(wheel_speeds[1])
+        self.rl_encoder_sim.setVelocity(wheel_speeds[2])
+        self.rr_encoder_sim.setVelocity(wheel_speeds[3])
         
-        self.fl_encoder_sim.setVelocity(wheel_speeds.frontLeft)
-        self.fr_encoder_sim.setVelocity(wheel_speeds.frontRight)
-        self.rl_encoder_sim.setVelocity(wheel_speeds.rearLeft)
-        self.rr_encoder_sim.setVelocity(wheel_speeds.rearRight)
-        
-        # Update simulated navx gyro heading
-        # We convert from rad/s to deg/frame
-        # wpilib is CCW positive, navx is CW positive, so we subtract
-        omega = self.kinematics.toChassisSpeeds(wheel_speeds).omega
-        self.navx_sim_yaw.set(self.navx_sim_yaw.get() - omega * tm_diff * (180 / pi))
+        # wpilib is radians CCW positive, navx is degrees CW positive
+        self.navx_sim_yaw.set((-180/pi) * self.sim.state.yaw())
     
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()
