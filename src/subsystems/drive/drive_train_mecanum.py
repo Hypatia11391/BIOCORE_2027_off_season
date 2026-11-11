@@ -202,6 +202,14 @@ class DriveTrainMecanum(Subsystem):
             if wpilib.RobotBase.isSimulation():
                 pose = self.sim.state.pose()
                 self.field.getObject("simulated_pose").setPose(Pose2d(pose[0], pose[1], Rotation2d(pose[2])))
+
+            if self.robot.test_command is not None and 'robotPose' in (frame := self.robot.test_command.recording.current_frame()):
+                pose = frame['robotPose']
+                self.field.getObject("recorded-pose").setPose(
+                    pose[0],
+                    pose[1],
+                    Rotation2d(pose[2]),
+                )
                 
         if DriverStation.isAutonomous():
             self.robot_drive.setSafetyEnabled(False)

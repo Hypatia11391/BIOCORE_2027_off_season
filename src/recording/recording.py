@@ -30,8 +30,7 @@ class Recording:
         return self.data[min(self.i + 1, len(self.data) - 1)]
     
     def current_frame(self):
-        assert self.i >= 0
-        return self.data[self.i]
+        return self.data[max(0, self.i)]
     
     def prev_frame(self):
         assert self.i >= 1
