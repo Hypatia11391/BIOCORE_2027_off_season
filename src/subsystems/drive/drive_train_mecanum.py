@@ -213,12 +213,12 @@ class DriveTrainMecanum(Subsystem):
         # print(f"{self.get_relative_speeds()=}")
         # print(self.pose_estimator.getEstimatedPosition().toPose2d())
         
-        if self.pose_estimator is not None:
-            self.pose_estimator.update(
-                self.navx.get_full_rotation(),
-                self.get_wheel_positions(),
-            )
-            self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
+        # if self.pose_estimator is not None:
+        #     self.pose_estimator.update(
+        #         self.navx.get_full_rotation(),
+        #         self.get_wheel_positions(),
+        #     )
+        #     self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
         
         if DriverStation.isAutonomous():
             self.robot_drive.setSafetyEnabled(False)

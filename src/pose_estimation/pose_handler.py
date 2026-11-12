@@ -1,82 +1,86 @@
+from typing import override
+
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.geometry import Pose3d, Rotation3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
-
-import ntcore
-import src.constants as consts
 import numpy as np
+
+import src.constants as consts
 from src.navx.navx import Navx
-from typing import override
+from src.network_server.network_server import NetworkServer
+
 
 class PoseHandler():
     _instance = None
-
+    
     def __init__(self, drive):
         self.robot_poses_in_camera = consts.ROBOT_POSES_IN_CAMERA
-
+        
         self.poses = np.array([Pose3d(), Pose3d(), Pose3d()])
-
+        
         self.navx = Navx()
         
-        print("INFO: Initializing vision server")
-        self.pose_sub = ntcore.NetworkTableInstance.getDefault().getTable("Vision").getDoubleArrayTopic("robot_pose").subscribe([], ntcore.PubSubOptions(pollStorage=20, keepDuplicates=True))
-
         self.drive = drive
-
+        
         print("INFO: Initializing pose estimator")
         self.pose_estimators = None
         for i in range(self.poses.shape[0]):
             single_pose_estimator = MecanumDrivePoseEstimator3d(self.drive.kinematics, self.navx.get_full_rotation(), MecanumDriveWheelPositions(), consts.STARTING_POSE)
             
-            if self.pose_estimators == None:
+            if self.pose_estimators is None:
                 self.pose_estimators = np.array([single_pose_estimator])
             else:
                 self.pose_estimators = np.append(self.pose_estimators, single_pose_estimator)
-
+        
         self.path_planner_offset = self.poses
-
+    
     def periodic(self):
         print("[info] periodic called")
         for i in range(self.pose_estimators.shape[0]):
             # Update Odometry
-            self.pose_estimators[i].update(
-                self.navx.get_full_rotation(),
-                self.drive.get_wheel_positions()
-            )
-
+            self.pose_estimators[i].update(self.navx.get_full_rotation(), self.drive.get_wheel_positions())
+            
             # Update current poses
-            self.poses[i] = self.pose_estimator[i].getEstimatedPosition()
-            print(self.poses[i]) # <----------------------------------------------Debug print
-
+            self.poses[i] = self.pose_estimators[i].getEstimatedPosition()
+            #print(self.poses[i])  # <----------------------------------------------Debug print
+        
         self.add_new_vision_measurements()
-
+    
     def add_new_vision_measurements(self):
-        for update in self.pose_sub.readQueue():
-            # Pull info
-            timestamp, camera_id, apriltag_set_number, *data = update.value # <--------------------- ToDo: Ask Luca about what the * does.
-            camera_id = int(camera_id)
-            apriltag_set_number = int(apriltag_set_number)
-            
-            # Pull and reshape pose and uncertainty data
-            pose = np.array(data[:16], dtype=np.float64).reshape((4,4), order='F')  # order='F' specifies column-major order, which is how cpp Eigen library stores it by default and is therefore  how it is serialized on the raspberry pi side
-            uncertainty = np.array(data[16:], dtype=np.float64)
-
-            # Convert pose to robot in global fram (instead of camera in global frame)
-            pose = self.robot_poses_in_camera[camera_id, :, :] @ pose
-            
-            # Input vision measurements
-            self.pose_estimators[apriltag_set_number].addVisionMeasurement(
-                Pose3d.from_matrix(pose),
-                timestamp,
-                tuple(uncertainty[:3])+(consts._TEMP_ANGULAR_POSE_UNCERTAINTY_VISION_,)
-            )
-
+        vals = NetworkServer.getInstance().get_double_array("robot_pose")
+        
+        print(vals)
+        
+        if len(vals) < 15:
+            return
+        
+        # Pull info
+        timestamp, camera_id, apriltag_set_number, *data = vals  # <--------------------- ToDo: Ask Luca about what the * does.
+        camera_id = int(camera_id)
+        apriltag_set_number = int(apriltag_set_number)
+        
+        if data != []:
+            print("Got data")
+        
+        # Pull and reshape pose and uncertainty data
+        pose = np.array(data[:16], dtype=np.float64).reshape((4, 4), order='F')  # order='F' specifies column-major order, which is how cpp Eigen library stores it by default and is therefore  how it is serialized on the raspberry pi side
+        uncertainty = np.array(data[16:], dtype=np.float64)
+        print("Camera Pose:")
+        print(pose)
+        
+        # Convert pose to robot in global fram (instead of camera in global frame)
+        pose = self.robot_poses_in_camera[camera_id, :, :] @ pose
+        
+        # Input vision measurements
+        self.pose_estimators[apriltag_set_number].addVisionMeasurement(Pose3d.fromMatrix(pose), timestamp,
+                                                                       tuple(uncertainty[:3]) + (consts._TEMP_ANGULAR_POSE_UNCERTAINTY_VISION_, ))
+    
     def reset_pose_offset(self):
         self.path_planner_offset = self.poses
-
+    
     def get_pose_2d(self, frame_id):
         return self.poses[frame_id].toPose2d()
-
+    
     def get_pose_3d(self, frame_id):
         return self.poses[frame_id]
     

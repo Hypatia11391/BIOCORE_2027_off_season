@@ -59,6 +59,9 @@ class RobotContainer:
         NetworkServer.getInstance().set_string_list("auto-list", ["Drive Forward 1m and Turn 90 Clockwise", "Drive Forward 1m", "Drive With Turn", "Turn 90 Clockwise"])
         
         self.autonomous_command = Command()
+        
+        self.field = Field2d()
+        
         # <------------------------------------- todo: is this a good spot to configure autos?
         
         PathPlannerLogging.setLogActivePathCallback(lambda poses: self.field.getObject("trajectory").setPoses(poses))
