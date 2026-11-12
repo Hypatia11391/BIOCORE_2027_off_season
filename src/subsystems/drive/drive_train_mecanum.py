@@ -115,7 +115,8 @@ class DriveTrainMecanum(Subsystem):
         kA = float(os.environ.get('kA', None) or DEFAULT_kA)  # volts per wheel radian/s**2 (after gear ratio reduction)
         kS = float(os.environ.get('kS', None) or DEFAULT_kS)  # volts to overcome static friction
         plant = LinearSystemId.identifyVelocitySystemRadians(kV, kA)
-        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS, kinematics=self.kinematics)
+        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants(
+            (plant, ) * 4, kS, kinematics=self.kinematics)
         
         self.fl_encoder_sim = rev.SparkRelativeEncoderSim(self.left_front_drive)
         self.fr_encoder_sim = rev.SparkRelativeEncoderSim(self.right_front_drive)
@@ -130,10 +131,11 @@ class DriveTrainMecanum(Subsystem):
         if kA is None: kA = DEFAULT_kA
         if kS is None: kS = DEFAULT_kS
         plant = LinearSystemId.identifyVelocitySystemMeters(kV, kA)
-        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants((plant, ) * 4, kS, kinematics=self.kinematics)
+        self.sim = StaticFrictionLinearSystemMecanumDriveSim.from_1d_plants(
+            (plant, ) * 4, kS, kinematics=self.kinematics)
         
         self.navx_sim_yaw.set(0.0)
-        
+    
     def should_flip_path(self) -> bool:
         return DriverStation.getAlliance() == DriverStation.Alliance.kBlue
     
@@ -197,12 +199,12 @@ class DriveTrainMecanum(Subsystem):
                 self.navx.get_full_rotation(),
                 self.get_wheel_positions(),
             )
-
+            
             self.field.setRobotPose(self.pose_estimator.getEstimatedPosition().toPose2d())
             if wpilib.RobotBase.isSimulation():
                 pose = self.sim.state.pose()
                 self.field.getObject("simulated_pose").setPose(Pose2d(pose[0], pose[1], Rotation2d(pose[2])))
-
+            
             if self.robot.test_command is not None and 'robotPose' in (frame := self.robot.test_command.recording.current_frame()):
                 pose = frame['robotPose']
                 self.field.getObject("recorded-pose").setPose(
@@ -210,7 +212,7 @@ class DriveTrainMecanum(Subsystem):
                     pose[1],
                     Rotation2d(pose[2]),
                 )
-                
+        
         if DriverStation.isAutonomous():
             self.robot_drive.setSafetyEnabled(False)
         else:
@@ -236,9 +238,19 @@ class DriveTrainMecanum(Subsystem):
                 self.right_rear_drive.getAppliedOutput(),
             ],
         )
+        
+        NetworkServer.getInstance().set_float_list(
+            "set-values",
+            [
+                self.left_front_drive.last_set,
+                self.right_front_drive.last_set,
+                self.left_rear_drive.last_set,
+                self.right_rear_drive.last_set,
+            ],
+        )
     
     @override
-    def simulationPeriodic(self):        
+    def simulationPeriodic(self):
         self.sim.step(1 / FPS, [
             -self.left_front_drive.get() * self.battery_voltage,
             -self.right_front_drive.get() * self.battery_voltage,
@@ -259,7 +271,7 @@ class DriveTrainMecanum(Subsystem):
         self.rr_encoder_sim.setVelocity(wheel_speeds[3])
         
         # wpilib is radians CCW positive, navx is degrees CW positive
-        self.navx_sim_yaw.set((-180/pi) * self.sim.state.yaw())
+        self.navx_sim_yaw.set((-180 / pi) * self.sim.state.yaw())
     
     def get_wheel_positions(self) -> MecanumDriveWheelPositions:
         positions = MecanumDriveWheelPositions()
