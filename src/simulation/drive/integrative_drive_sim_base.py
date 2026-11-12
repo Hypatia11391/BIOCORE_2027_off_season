@@ -25,6 +25,10 @@ class DriveState:
     def field_oriented_chassis_speeds(self):
         return self.state_np[11:14]
     
+    def robot_relative_chassis_speeds(self):
+        speeds = ChassisSpeeds.fromFieldRelativeSpeeds(ChassisSpeeds(*self.field_oriented_chassis_speeds()), self.yaw())
+        return np.array([speeds.vx, speeds.vy, speeds.omega])
+    
     def speeds(self):
         return self.state_np[7:14]
     
