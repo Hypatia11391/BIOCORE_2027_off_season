@@ -30,6 +30,14 @@ class NetworkServer:
         
         self.double_list_subsribers: dict[str, ntcore.DoubleArraySubscriber] = {}
     
+    def get_synced_time(self) -> float:
+        offset = self.inst.getServerTimeOffset()
+        
+        if offset is None:
+            offset = 0
+        
+        return ntcore._now() + offset
+    
     @classmethod
     def getInstance(cls) -> Self:
         if cls._instance is None:
