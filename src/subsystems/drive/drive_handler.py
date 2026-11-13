@@ -11,6 +11,11 @@ class DummySubsystem(Subsystem):
     pass
 
 
+class RotationControlModes(Enum):
+    VELOCITY_CONTROL = 0
+    POSITION_CONTROL = 1
+
+
 class CommandTypes(Enum):
     CLAIM_COMMAND = 0
     DRIVE_TRANSLATION_COMMAND = 1
@@ -25,6 +30,11 @@ class ClaimCommand(NamedTuple):
     claim_turn: bool = False
     
     command_type: int = CommandTypes.CLAIM_COMMAND.value
+
+
+class SetRotationControlModeCommand(NamedTuple):
+    id: int
+    control_mode: DriveHandler.RotationControlModes = DriveHandler.RotationControlModes.VELOCITY_CONTROL
 
 
 class DriveTranslationCommand(NamedTuple):
@@ -85,6 +95,8 @@ class DriveHandler:
         self.turn_speed = 0
         
         self.chassis_speeds = ChassisSpeeds()
+        
+        self.rotation_control_mode = RotationControlModes.VELOCITY_CONTROL
     
     def get_id(self) -> int:
         self.current_id += 1
@@ -122,18 +134,23 @@ class DriveHandler:
                         self.y_speed = command.y_speed
                 
                 case CommandTypes.DRIVE_TURN_COMMAND.value:
-                    if self.current_translation == command.id:
+                    if self.current_turn == command.id and self.rotation_control_mode == RotationControlModes.VELOCITY_CONTROL:
                         self.turn_speed = command.turn_speed
                 
                 case CommandTypes.DRIVE_TURN_TRANSLATION_COMMAND.value:
                     if self.current_translation == command.id and self.current_turn == command.id:
                         self.x_speed = command.x_speed
                         self.y_speed = command.y_speed
-                        self.turn_speed = command.turn_speed
+                        
+                        if self.rotation_control_mode == RotationControlModes.VELOCITY_CONTROL:
+                            self.turn_speed = command.turn_speed
                 
                 case CommandTypes.DRIVE_CHASSIS_SPEEDS_COMMAND.value:
                     if self.current_translation == command.id and self.current_turn == command.id:
                         self.chassis_speeds = command.chassis_speeds
+                        
+                        if self.rotation_control_mode == RotationControlModes.POSITION_CONTROL:
+                            self.chassis_speeds.omega = 0
         
         if not self.using_chassis_speeds:
             print(f"{(self.x_speed, self.y_speed, self.turn_speed)=}")
