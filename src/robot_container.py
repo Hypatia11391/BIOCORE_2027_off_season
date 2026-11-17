@@ -103,7 +103,7 @@ class RobotContainer:
                     self.pose_estimator,
                     PIDController(1, 0, 0),  # TODO: Tune
                 )),
-                FireCommand(target, self.feed, self.kicker, self.shooter, self.drive_handler, self.pose_estimator),
+                FireCommand(target, self.feed, self.kicker, self.shooter, self.pose_estimator),
             ),
             cmd.none(),
             lambda: self.shot_possible(self.get_relative_target(target)),
