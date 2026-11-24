@@ -17,9 +17,9 @@ import src.subsystems.drive.drive_train_constants as drive_consts
 from src.commands.drive_telop import DriveTelop
 from src.commands.intake_balls import IntakeBalls
 from src.commands.operate_telop import OperateTelop
-from commands.turn_to import TurnToCommand
-from commands.stop import StopCommand
-from commands.fire import FireCommand
+from src.commands.turn_to import TurnToCommand
+from src.commands.stop import StopCommand
+from src.commands.fire import FireCommand
 from src.navx.navx import Navx
 from src.network_server.network_server import NetworkServer
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
@@ -62,7 +62,14 @@ class RobotContainer:
         self.field = Field2d()
         
         self.drive_handler.get_dummy_translation().setDefaultCommand(DriveTelop(self.drive_handler, self.controller_drive))
-        self.shooter.setDefaultCommand(OperateTelop(self.intake, self.feed, self.kicker, self.shooter, self.controller_operate))
+        self.shooter.setDefaultCommand(OperateTelop(
+            self.intake,
+            self.feed,
+            self.kicker,
+            self.shooter,
+            self.controller_operate,
+            self.get_shoot_sequence(),
+        ))
         
         self.autonomous_command = cmd.none()
         
@@ -93,7 +100,7 @@ class RobotContainer:
         return target - self.pose_estimator.getEstimatedPosition().translation()
     
     def get_shoot_sequence(self) -> Command:
-        target = Translation3d(5, 2, 1)
+        target = Translation3d(-2, -2, 0)
         shoot_sequence = cmd.either(
             cmd.sequence(
                 StopCommand(self.feed, self.kicker, self.shooter, self.drive_handler, self.intake),
@@ -101,7 +108,7 @@ class RobotContainer:
                     self.get_relative_target(target).toTranslation2d().angle().degrees(),
                     self.drive_handler,
                     self.pose_estimator,
-                    PIDController(1, 0, 0),  # TODO: Tune
+                    PIDController(0.005, 0, 0),  # TODO: Tune
                 )),
                 FireCommand(target, self.feed, self.kicker, self.shooter, self.pose_estimator),
             ),

@@ -92,7 +92,7 @@ class DecoupledFireCommand(Command):
                 self.kicker.stop()
                 return
             
-            current_shot = self.calculate_current_shot(self.shooter.get_left_rpm(), self.pose_estimator.getEstimatedPosition().rotation().angle_degrees, self.navx.get_chassis_speeds(), relative_target.Z())
+            current_shot = self.calculate_current_shot(self.shooter.get_left_rpm(), self.pose_estimator.getEstimatedPosition().rotation().toRotation2d().degrees(), self.navx.get_chassis_speeds(), relative_target.Z())
             
             left_shooter_speed, right_shooter_speed = target_state.rpm, target_state.rpm
             

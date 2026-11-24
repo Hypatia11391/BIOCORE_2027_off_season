@@ -6,7 +6,7 @@ from wpimath.estimator import MecanumDrivePoseEstimator3d
 
 from src.subsystems.drive.drive_handler import DriveHandler, ClaimCommand, DriveTurnAndTranslationCommand
 
-ANGLE_THRESHOLD = 3  # TODO: Tune
+ANGLE_THRESHOLD = 5  # TODO: Tune
 
 
 class TurnToCommand(Command):
@@ -34,20 +34,22 @@ class TurnToCommand(Command):
     @override
     def execute(self):
         pid_out = self.pid.calculate(
-            self.pose_estimator.getEstimatedPosition().rotation().angle_degrees,
+            self.pose_estimator.getEstimatedPosition().rotation().toRotation2d().degrees(),
             self.target_angle,
         )
         
         pid_out = min(1, max(-1, pid_out))
+        print(pid_out)
         
         self.drive.push_command(DriveTurnAndTranslationCommand(self.id, 0, 0, pid_out))
     
     @override
     def end(self, interrupted: bool):
-        pass
+        self.drive.push_command(DriveTurnAndTranslationCommand(self.id, 0, 0, 0))
     
     @override
     def isFinished(self) -> bool:
-        angle = self.pose_estimator.getEstimatedPosition().rotation().angle_degrees
+        angle = self.pose_estimator.getEstimatedPosition().rotation().toRotation2d().degrees()
         
+        print(abs(angle - self.target_angle))
         return abs(angle - self.target_angle) < ANGLE_THRESHOLD
