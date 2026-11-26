@@ -11,20 +11,20 @@ import src.subsystems.drive.swerve_constants as consts
 
 
 class SwerveModule:
-    def __init__(self, drive_id: int, turn_id: int, cancoder_id: int, cancoder_offset: float):
+    def __init__(self, drive_id: int, turn_id: int, cancoder_id: int):
         self.drive_motor = TalonFX(drive_id)
         self.turn_motor = TalonFX(turn_id)
         
         self.cancoder = CANcoder(cancoder_id)
         
-        self.config_motors(cancoder_offset)
-        
-        self.drive_velocity_requester = VelocityVoltage(0.0)
-        self.turn_position_requester = PositionVoltage(0.0)
-        
         self.drive_velocity_signal = self.drive_motor.get_velocity()
         self.drive_position_signal = self.drive_motor.get_position()
         self.turn_position_signal = self.turn_motor.get_position()
+        
+        self.config_motors()
+        
+        self.drive_velocity_requester = VelocityVoltage(0.0)
+        self.turn_position_requester = PositionVoltage(0.0)
     
     def setDesiredState(self, desired_state: SwerveModuleState) -> None:
         self.turn_position_signal.refresh(report_error=True)
@@ -34,9 +34,11 @@ class SwerveModule:
         self.drive_motor.set_control(self.drive_velocity_requester.with_velocity(desired_state.speed))
         self.turn_motor.set_control(self.turn_position_requester.with_position(desired_state.angle.radians() / (2.0 * pi)))
     
-    def config_motors(self, cancoder_offset: float) -> None:
+    def config_motors(self) -> None:
         cancoder_config = CANcoderConfiguration()  # TODO: might need more config, cw vs ccw and sensor range
-        cancoder_config.magnet_sensor.magnet_offset = cancoder_offset
+        
+        self.turn_position_signal.refresh(report_error=True)
+        cancoder_config.magnet_sensor.magnet_offset = self.turn_position_signal.value
         
         self.cancoder.configurator.apply(cancoder_config)
         

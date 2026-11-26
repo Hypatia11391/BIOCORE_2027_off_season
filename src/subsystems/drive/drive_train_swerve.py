@@ -23,28 +23,24 @@ class DriveTrainSwerve(Subsystem):
             consts.FL_DRIVE_ID,
             consts.FL_TURN_ID,
             consts.FL_CANCODER_ID,
-            0,  # TODO: shouldn't be zero figure out how to get
         )
         
         self.fr_module = SwerveModule(
             consts.FR_DRIVE_ID,
             consts.FR_TURN_ID,
             consts.FR_CANCODER_ID,
-            0,
         )
         
         self.rl_module = SwerveModule(
             consts.RL_DRIVE_ID,
             consts.RL_TURN_ID,
             consts.RL_CANCODER_ID,
-            0,
         )
         
         self.rr_module = SwerveModule(
             consts.RR_DRIVE_ID,
             consts.RR_TURN_ID,
             consts.RR_CANCODER_ID,
-            0,
         )
         
         self.kinematics = SwerveDrive4Kinematics(
