@@ -3,6 +3,8 @@ from typing import NamedTuple
 
 from commands2 import Subsystem
 from wpimath.kinematics import ChassisSpeeds
+from wpimath.controller import ProfiledPIDController
+from wpimath.trajectory import TrapezoidProfile
 
 from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
 
@@ -18,10 +20,11 @@ class RotationControlModes(Enum):
 
 class CommandTypes(Enum):
     CLAIM_COMMAND = 0
-    DRIVE_TRANSLATION_COMMAND = 1
-    DRIVE_TURN_COMMAND = 2
-    DRIVE_TURN_TRANSLATION_COMMAND = 3
-    DRIVE_CHASSIS_SPEEDS_COMMAND = 4
+    SET_ROTATION_CONTROL_MODE_COMMAND = 1
+    DRIVE_TRANSLATION_COMMAND = 2
+    DRIVE_TURN_COMMAND = 3
+    DRIVE_TURN_TRANSLATION_COMMAND = 4
+    DRIVE_CHASSIS_SPEEDS_COMMAND = 5
 
 
 class ClaimCommand(NamedTuple):
@@ -34,7 +37,7 @@ class ClaimCommand(NamedTuple):
 
 class SetRotationControlModeCommand(NamedTuple):
     id: int
-    control_mode: DriveHandler.RotationControlModes = DriveHandler.RotationControlModes.VELOCITY_CONTROL
+    control_mode: RotationControlModes = RotationControlModes.VELOCITY_CONTROL
 
 
 class DriveTranslationCommand(NamedTuple):
@@ -93,10 +96,13 @@ class DriveHandler:
         self.x_speed = 0
         self.y_speed = 0
         self.turn_speed = 0
+        self.rotation_target = 0
         
         self.chassis_speeds = ChassisSpeeds()
         
         self.rotation_control_mode = RotationControlModes.VELOCITY_CONTROL
+        self.rotation_pid_controller = ProfiledPIDController(0.01, 0, 0, TrapezoidProfile.Constraints(180, 360))
+        self.rotation_pid_controller.enableContinuousInput(-180, 180)
     
     def get_id(self) -> int:
         self.current_id += 1
@@ -128,6 +134,12 @@ class DriveHandler:
                     if command.claim_turn:
                         self.current_turn = command.id
                 
+                case CommandTypes.SET_ROTATION_CONTROL_MODE_COMMAND:
+                    self.rotation_control_mode = command.control_mode
+                    
+                    if self.rotation_control_mode == RotationControlModes.POSITION_CONTROL:
+                        self.rotation_target = self.drive.get_pose_2d().rotation().degrees()
+                
                 case CommandTypes.DRIVE_TRANSLATION_COMMAND.value:
                     if self.current_translation == command.id:
                         self.x_speed = command.x_speed
@@ -151,6 +163,18 @@ class DriveHandler:
                         
                         if self.rotation_control_mode == RotationControlModes.POSITION_CONTROL:
                             self.chassis_speeds.omega = 0
+        
+        if self.rotation_control_mode == RotationControlModes.POSITION_CONTROL:
+            if not self.using_chassis_speeds:
+                self.turn_speed = self.rotation_pid_controller.calculate(
+                    self.drive.get_pose_2d().rotation().degrees(),
+                    self.rotation_target,
+                )
+            else:
+                self.chassis_speeds.omega = self.rotation_pid_controller.calculate(
+                    self.drive.get_pose_2d().rotation().degrees(),
+                    self.rotation_target,
+                )
         
         if not self.using_chassis_speeds:
             print(f"{(self.x_speed, self.y_speed, self.turn_speed)=}")
