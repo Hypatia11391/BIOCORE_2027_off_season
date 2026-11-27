@@ -66,7 +66,7 @@ class OperateTelop(Command):
                 self.intake.set_feed_speed(-operation_consts.INTAKE_FEED_PWR)
         
         rt_shoot = self.controller.getRawAxis(JoystickAxes.RT.value)
-        lb_shoot_auto = self.controller.getRawButton(Buttons.LB.value)
+        x_shoot_auto = self.controller.getRawButton(Buttons.X.value)
         
         if abs(rt_shoot) > 0.08:
             left_shooter_speed = 2145  # rt_shoot * operation_consts.HIGH_LEFT_RPM
@@ -82,13 +82,13 @@ class OperateTelop(Command):
                 self.feed.stop()
                 self.kicker.stop()
         
+        elif x_shoot_auto:
+            CommandScheduler.getInstance().schedule(self.auto_shoot_command)
+        
         else:
             self.feed.stop()
             self.kicker.stop()
             self.shooter.stop()
-        
-        if lb_shoot_auto:
-            CommandScheduler.getInstance().schedule(self.auto_shoot_command)
     
     @override
     def end(self, interrupted: bool) -> None:
@@ -122,12 +122,12 @@ class OperateTelop(Command):
         lb_out = self.controller.getRawButtonPressed(Buttons.LB.value)
         rb_in = self.controller.getRawButtonPressed(Buttons.RB.value)
         
-        # if lb_out:
-        #     if self.intake_feed_state != operation_consts.IntakeFeedState.OUT.value:
-        #         self.intake_feed_state = operation_consts.IntakeFeedState.OUT.value
-        
-        #     else:
-        #         self.intake_feed_state = operation_consts.IntakeFeedState.OFF.value
+        if lb_out:
+            if self.intake_feed_state != operation_consts.IntakeFeedState.OUT.value:
+                self.intake_feed_state = operation_consts.IntakeFeedState.OUT.value
+            
+            else:
+                self.intake_feed_state = operation_consts.IntakeFeedState.OFF.value
         
         if rb_in:
             if self.intake_feed_state != operation_consts.IntakeFeedState.IN.value:

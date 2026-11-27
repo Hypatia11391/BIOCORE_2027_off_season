@@ -18,5 +18,5 @@ class PhysicsEngine:
         self.drive = robot.robot_container.drive_handler
     
     def update_sim(self, now: float, tm_diff: float):
-        # self.physics_controller.drive(self.drive.get_relative_speeds(), tm_diff)
         pass
+        # self.physics_controller.drive(self.drive.get_relative_speeds(), tm_diff)

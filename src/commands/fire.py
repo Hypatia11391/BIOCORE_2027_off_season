@@ -11,24 +11,31 @@ from src.subsystems.mechanisms.feed import Feed
 from src.subsystems.mechanisms.kicker import Kicker
 from src.subsystems.mechanisms.shooter import Shooter
 import src.subsystems.mechanisms.shooter_constants as shooter_consts
-from src.subsystems.drive.drive_train_mecanum import DriveTrainMecanum
+from src.subsystems.drive.drive_handler import DriveHandler, ClaimCommand
 
 GRAVITY = 9.81
 LAUNCHER_ANGLE = math.pi / 3  # TODO: remeasure
 SHOOTER_RADIUS = 0.05  # TODO: remeasure
 FIRE_DURATION = 3
+SHOOTER_POS = Translation3d(0.1625, 0, 0.42)
+SHOOTER_EFFICIENCY = 0.45625
 
 
 class FireCommand(Command):
-    def __init__(self, target: Translation3d, feed: Feed, kicker: Kicker, shooter: Shooter, pose_estimator: MecanumDrivePoseEstimator3d):
+    def __init__(self, target: Translation3d, feed: Feed, kicker: Kicker, shooter: Shooter, drive: DriveHandler, pose_estimator: MecanumDrivePoseEstimator3d):
         self.target = target
         
         self.feed = feed
         self.kicker = kicker
         self.shooter = shooter
+        self.drive = drive
         self.pose_estimator = pose_estimator
         
         self.addRequirements(feed, kicker, shooter)
+        
+        self.id = self.drive.get_id()
+        
+        self.drive.push_command(ClaimCommand(self.id, True, True))
     
     class CaculationResult(NamedTuple):
         rpm: float
@@ -41,7 +48,7 @@ class FireCommand(Command):
         
         t = math.sqrt(2 * (math.tan(LAUNCHER_ANGLE) * relative_target.toTranslation2d().norm() - relative_target.Z()) / GRAVITY)
         v = relative_target.toTranslation2d().norm() / (math.cos(LAUNCHER_ANGLE) * t)
-        rpm = v / (2 * math.pi * SHOOTER_RADIUS) * 2 * 60
+        rpm = v / (math.pi * SHOOTER_RADIUS * 2 * SHOOTER_EFFICIENCY) * 60
         
         if rpm > shooter_consts.SHOOTER_FREE_SPEED:
             return FireCommand.CaculationResult(rpm=rpm, is_possible=False)
@@ -55,7 +62,7 @@ class FireCommand(Command):
     
     @override
     def initialize(self):
-        relative_target = self.target - self.pose_estimator.getEstimatedPosition().translation()
+        relative_target = self.target - self.pose_estimator.getEstimatedPosition().translation() + SHOOTER_POS
         self.calculation_result = self.calculate_rpm(relative_target)
         
         if self.calculation_result.is_possible:
@@ -68,6 +75,8 @@ class FireCommand(Command):
     @override
     def execute(self):
         left_shooter_speed, right_shooter_speed = self.calculation_result.rpm, self.calculation_result.rpm
+        
+        print(f"Targ {left_shooter_speed=} {right_shooter_speed=}, current {self.shooter.get_left_rpm()=}, {self.shooter.get_right_rpm()=}")
         
         self.shooter.set_target_rpm(left_shooter_speed, right_shooter_speed)
         

@@ -83,8 +83,6 @@ class Shooter(Subsystem):
         config.closedLoop.pid(shooter_consts.SHOOTER_KP, shooter_consts.SHOOTER_KI, shooter_consts.SHOOTER_KD)
         config.closedLoop.outputRange(shooter_consts.SHOOTER_OUTPUT_RANGE_MIN, shooter_consts.SHOOTER_OUTPUT_RANGE_MAX)
         
-        config.closedLoop.feedForward.kV(shooter_consts.SHOOTER_KV)
-        
         motor.configureAsync(
             config,
             ResetMode.kNoResetSafeParameters,

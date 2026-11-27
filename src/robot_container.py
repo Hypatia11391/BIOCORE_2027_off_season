@@ -100,7 +100,7 @@ class RobotContainer:
         return target - self.pose_estimator.getEstimatedPosition().translation()
     
     def get_shoot_sequence(self) -> Command:
-        target = Translation3d(-2, -2, 0)
+        target = Translation3d(4, 0, 0)
         shoot_sequence = cmd.either(
             cmd.sequence(
                 StopCommand(self.feed, self.kicker, self.shooter, self.drive_handler, self.intake),
@@ -108,9 +108,9 @@ class RobotContainer:
                     self.get_relative_target(target).toTranslation2d().angle().degrees(),
                     self.drive_handler,
                     self.pose_estimator,
-                    PIDController(0.005, 0, 0),  # TODO: Tune
+                    PIDController(0.005, 0, 0),
                 )),
-                FireCommand(target, self.feed, self.kicker, self.shooter, self.pose_estimator),
+                FireCommand(target, self.feed, self.kicker, self.shooter, self.drive_handler, self.pose_estimator),
             ),
             cmd.none(),
             lambda: self.shot_possible(self.get_relative_target(target)),
