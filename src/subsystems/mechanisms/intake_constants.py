@@ -26,3 +26,6 @@ INTAKE_FEED_INVERTED: Final[bool] = True
 INTAKE_FEED_IDLE_MODE: Final[SparkBaseConfig.IdleMode] = SparkBaseConfig.IdleMode.kBrake
 INTAKE_FEED_SMART_LIMIT: Final[int] = 40
 INTAKE_FEED_VOLTAGE_COMPENSATION: Final[float] = 12
+
+# in rpm
+INTAKE_FEED_MAX_SPEED: Final[int] = 40

@@ -1,94 +1,107 @@
+from typing import override
+from time import time_ns
+import sys
+
 from wpimath.estimator import MecanumDrivePoseEstimator3d
 from wpimath.geometry import Pose3d, Rotation3d
 from wpimath.kinematics import MecanumDriveKinematics, MecanumDriveWheelPositions
-
 import ntcore
-import src.constants as consts
 import numpy as np
+
+import src.constants as consts
 from src.navx.navx import Navx
-from typing import override
+from src.network_server.network_server import NetworkServer
+
 
 class PoseHandler():
     _instance = None
-
+    
     def __init__(self, drive):
-        self.camera_poses_inv_ = consts.ROBOT_POSES_IN_CAMERA
-
-        self.poses = np.array([Pose3d(), Pose3d(), Pose3d()])
-
+        self.robot_poses_in_camera = consts.ROBOT_POSES_IN_CAMERA
+        
+        self.poses = [Pose3d(), Pose3d(), Pose3d()]
+        
         self.navx = Navx()
         
-        print("INFO: Initializing vision server")
-        self.pose_sub = ntcore.NetworkTableInstance.getDefault().getTable("Vision").getDoubleArrayTopic("robot_pose").subscribe([], ntcore.PubSubOptions(pollStorage=20, keepDuplicates=True))
-
         self.drive = drive
-
+        
         print("INFO: Initializing pose estimator")
-        self.pose_estimators = None
-        for i in range(self.poses.shape[0]):
+        self.pose_estimators: list[MecanumDrivePoseEstimator3d] = []
+        for i in range(len(self.poses)):
             single_pose_estimator = MecanumDrivePoseEstimator3d(self.drive.kinematics, self.navx.get_full_rotation(), MecanumDriveWheelPositions(), consts.STARTING_POSE)
-            
-            if self.pose_estimators == None:
-                self.pose_estimators = np.array([single_pose_estimator])
-            else:
-                np.append(self.pose_estimators, single_pose_estimator)
-
+            self.pose_estimators.append(single_pose_estimator)
+    
     def transform_cov_mat(self, cov_in, T_mat):
         R_mat = T_mat[:3, :3]
-
-        J = np.zeros((6, 6), float)
-
-        t_skew = np.array([[0,              -T_mat[2, 3],   T_mat[1, 3]],
-                           [T_mat[2, 3],    0, -T_mat[0,    3]         ],
-                           [-T_mat[1, 3],   T_mat[0, 3],    0          ]])
-
-        J[ :3, :3] = R_mat
-        J[ :3, 3:] = t_skew * R_mat
-        J[3: , 3:] = R_mat
-
-        cov_out = J * cov_in * J.T
-
-        return cov_out
-
-    def get_angular_uncertainty(self, cam_id, cov_mat, pose):
-        cov_mat_out = self.transform_cov_mat(cov_mat, self.camera_poses_inv_[cam_id, :, :])
-
         
-
+        J = np.zeros((6, 6), float)
+        t_skew = np.array([[0, -T_mat[2, 3], T_mat[1, 3]], [T_mat[2, 3], 0, -T_mat[0, 3]], [-T_mat[1, 3], T_mat[0, 3], 0]])
+        
+        J[:3, :3] = R_mat
+        J[:3, 3:] = t_skew @ R_mat
+        J[3:, 3:] = R_mat
+        
+        cov_out = J @ cov_in @ J.T
+        
+        return cov_out
+    
     def periodic(self):
-        for i in range(self.pose_estimators.shape[0]):
+        for i in range(len(self.pose_estimators)):
             # Update Odometry
-            self.pose_estimators[i].update(
-                self.navx.get_full_rotation(),
-                self.drive.get_wheel_positions()
-            )
-
+            self.pose_estimators[i].update(self.navx.get_full_rotation(), self.drive.get_wheel_positions())
+            
             # Update current poses
-            self.poses[i] = self.pose_estimator[i].getEstimatedPosition()
-
+            self.poses[i] = self.pose_estimators[i].getEstimatedPosition()
+        
         self.add_new_vision_measurements()
-
+    
     def add_new_vision_measurements(self):
-        for update in self.pose_sub.readQueue():
-            # Pull data
-            timestamp, camera_id, apriltag_set_number, *data = update.value # <--------------------- ToDo: Ask Luca about what the * does.
-            
-            # Pull and reshape pose and uncertainty data
-            pose = np.array(data[:16], dtype=np.float64).reshape((4,4), order='F')  # order='F' specifies column-major order, which is how cpp Eigen library stores it by default and is therefore  how it is serialized on the raspberry pi side
-            uncertainty = np.array(data[16:], dtype=np.float64)
-
-            # Convert pose to robot in global fram (instead of camera in global frame)
-            pose = self.camera_poses_inv_[camera_id, :, :] @ pose
-            
-            # Input vision measurements
-            self.pose_estimators[apriltag_set_number].addVisionMeasurement(
-                Pose3d.from_matrix(pose),
-                timestamp,
-                tuple(uncertainty[:3])+(consts._TEMP_ANGULAR_POSE_UNCERTAINTY_VISION_,)
-            )
-
-    def get_pose_2d(self):
-        return self.pose_estimator.getEstimatedPosition().toPose2d()
-
-    def get_pose_3d(self):
-        return self.pose_estimator.getEstimatedPosition()
+        vals = NetworkServer.getInstance().get_double_array("robot_pose")
+        
+        if len(vals) < 15:
+            return
+        
+        # Pull info
+        timestamp, camera_id, apriltag_set_number, *data = vals  # <--------------------- ToDo: Ask Luca about what the * does.
+        camera_id = int(camera_id)
+        apriltag_set_number = int(apriltag_set_number)
+        
+        # Pull and reshape pose and uncertainty data
+        pose = np.array(data[:16], dtype=np.float64).reshape((4, 4), order='F')  # order='F' specifies column-major order, which is how cpp Eigen library stores it by default and is therefore  how it is serialized on the raspberry pi side
+        pose_cov_mat = np.array(data[16:], dtype=np.float64)
+        print("Camera Pose:")
+        print(pose)
+        
+        print(f"{timestamp - NetworkServer.getInstance().get_synced_time() / 1e3=}")
+        
+        # Convert pose to robot in global fram (instead of camera in global frame)
+        pose = self.robot_poses_in_camera[camera_id, :, :] @ pose
+        
+        last_line_errors = pose[3, :] - np.array([0, 0, 0, 1])
+        last_line_check = np.abs(last_line_errors) > 1e-6
+        if np.any(last_line_check):
+            print(f"Pose matrix last line corrupted. Error val was: {last_line_errors}", file=sys.stderr)
+        
+        pose[3, :] = np.array([0, 0, 0, 1])
+        
+        # Convert and format uncertainty info
+        pose_cov_mat = self.transform_cov_mat(pose_cov_mat, self.robot_poses_in_camera[camera_id, :, :])
+        angle_sigmas_squared = np.array([pose_cov_mat[3, 3], pose_cov_mat[4, 4], pose_cov_mat[5, 5]])
+        angle_sigma = np.average(np.sqrt(angle_sigmas_squared))
+        sigmas = [pose_cov_mat[0, 0], pose_cov_mat[1, 1], pose_cov_mat[2, 2], angle_sigma]
+        
+        # Input vision measurements
+        self.pose_estimators[apriltag_set_number].addVisionMeasurement(Pose3d.fromMatrix(pose), timestamp, sigmas)
+    
+    def reset_pose_offset(self):
+        self.path_planner_offset = self.poses
+    
+    def get_pose_2d(self, frame_id):
+        return self.poses[frame_id].toPose2d()
+    
+    def get_pose_3d(self, frame_id):
+        return self.poses[frame_id]
+    
+    def get_pathplanner_pose_2d(self, frame_id):
+        path_planner_pose_3d = self.poses[frame_id].relative_to(self.path_planner_offset)
+        return path_planner_pose_3d.toPose2d()
